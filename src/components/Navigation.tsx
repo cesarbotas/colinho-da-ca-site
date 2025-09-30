@@ -18,6 +18,14 @@ const Navigation = () => {
       ],
     },
     {
+      title: "Cadastro",
+      path: "/cadastro",
+      submenu: [
+        { title: "Cliente", path: "/cadastro/cliente" },
+        { title: "Pets", path: "/cadastro/pets" },
+      ],
+    },
+    {
       title: "Sobre",
       path: "/sobre",
       submenu: [

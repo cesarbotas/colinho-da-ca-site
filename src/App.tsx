@@ -8,6 +8,9 @@ import Servicos from "./pages/Servicos";
 import Sobre from "./pages/Sobre";
 import ServicoCuidados from "./pages/ServicoCuidados";
 import ServicoHospedagem from "./pages/ServicoHospedagem";
+import Cadastro from "./pages/Cadastro";
+import CadastroCliente from "./pages/CadastroCliente";
+import CadastroPets from "./pages/CadastroPets";
 import SobreHistoria from "./pages/SobreHistoria";
 import SobreContato from "./pages/SobreContato";
 import NotFound from "./pages/NotFound";
@@ -25,6 +28,9 @@ const App = () => (
           <Route path="/servicos" element={<Servicos />} />
           <Route path="/servicos/cuidados" element={<ServicoCuidados />} />
           <Route path="/servicos/hospedagem" element={<ServicoHospedagem />} />
+          <Route path="/cadastro" element={<Cadastro />} />
+          <Route path="/cadastro/cliente" element={<CadastroCliente />} />
+          <Route path="/cadastro/pets" element={<CadastroPets />} />
           <Route path="/sobre" element={<Sobre />} />
           <Route path="/sobre/historia" element={<SobreHistoria />} />
           <Route path="/sobre/contato" element={<SobreContato />} />
