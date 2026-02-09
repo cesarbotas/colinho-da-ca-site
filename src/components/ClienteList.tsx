@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { listarClientes, excluirCliente, type ClienteData } from "@/lib/api";
 
@@ -16,12 +17,16 @@ const ClienteList = ({ onNovoCliente, onEditarCliente }: ClienteListProps) => {
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | number | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
 
   const carregarClientes = async () => {
     setLoading(true);
     try {
-      const data = await listarClientes();
-      setClientes(data);
+      const response = await listarClientes(page, pageSize);
+      setClientes(response.data);
+      setTotal(response.total);
     } catch (error) {
       toast({
         title: "Erro",
@@ -35,7 +40,7 @@ const ClienteList = ({ onNovoCliente, onEditarCliente }: ClienteListProps) => {
 
   useEffect(() => {
     carregarClientes();
-  }, []);
+  }, [page, pageSize]);
 
   const handleExcluir = async () => {
     if (deleteId === null) return;
@@ -43,7 +48,7 @@ const ClienteList = ({ onNovoCliente, onEditarCliente }: ClienteListProps) => {
     try {
       await excluirCliente(deleteId);
       toast({ title: "Sucesso!", description: "Cliente excluído com sucesso." });
-      setClientes((prev) => prev.filter((c) => c.id !== deleteId));
+      carregarClientes();
     } catch (error) {
       toast({
         title: "Erro",
@@ -56,12 +61,29 @@ const ClienteList = ({ onNovoCliente, onEditarCliente }: ClienteListProps) => {
     }
   };
 
+  const totalPages = Math.ceil(total / pageSize);
+
   return (
     <>
       <div className="flex justify-between items-center mb-6">
-        <p className="text-muted-foreground">
-          {loading ? "Carregando..." : `${clientes.length} cliente(s) encontrado(s)`}
-        </p>
+        <div className="flex items-center gap-4">
+          <p className="text-muted-foreground">
+            {loading ? "Carregando..." : `${total} cliente(s) encontrado(s)`}
+          </p>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Exibir:</span>
+            <Select value={pageSize.toString()} onValueChange={(v) => { setPageSize(Number(v)); setPage(1); }}>
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
         <Button onClick={onNovoCliente}>
           <Plus className="mr-2 h-4 w-4" />
           Novo Cliente
@@ -84,7 +106,7 @@ const ClienteList = ({ onNovoCliente, onEditarCliente }: ClienteListProps) => {
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Telefone</TableHead>
+                <TableHead>Celular</TableHead>
                 <TableHead>CPF</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
@@ -94,7 +116,7 @@ const ClienteList = ({ onNovoCliente, onEditarCliente }: ClienteListProps) => {
                 <TableRow key={cliente.id}>
                   <TableCell className="font-medium">{cliente.nome}</TableCell>
                   <TableCell>{cliente.email}</TableCell>
-                  <TableCell>{cliente.telefone}</TableCell>
+                  <TableCell>{cliente.celular}</TableCell>
                   <TableCell>{cliente.cpf || "—"}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
@@ -110,6 +132,30 @@ const ClienteList = ({ onNovoCliente, onEditarCliente }: ClienteListProps) => {
               ))}
             </TableBody>
           </Table>
+        </div>
+      )}
+
+      {!loading && totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-6">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Página {page} de {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       )}
 
