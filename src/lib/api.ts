@@ -13,6 +13,7 @@ export interface ClienteData {
 }
 
 export interface PetData {
+  id?: string | number;
   nomePet: string;
   especie: string;
   raca: string;
@@ -22,6 +23,7 @@ export interface PetData {
   observacoes: string;
 }
 
+// ... keep existing code (cliente functions lines 25-66)
 export async function listarClientes(): Promise<ClienteData[]> {
   const response = await fetch(`${API_BASE_URL}/api/clientes`);
   if (!response.ok) throw new Error("Erro ao buscar clientes");
@@ -65,19 +67,46 @@ export async function excluirCliente(id: string | number): Promise<{ success: bo
   return response.json();
 }
 
+// Pet CRUD
+export async function listarPets(): Promise<PetData[]> {
+  const response = await fetch(`${API_BASE_URL}/api/pets`);
+  if (!response.ok) throw new Error("Erro ao buscar pets");
+  return response.json();
+}
+
 export async function cadastrarPet(data: PetData): Promise<{ success: boolean; message: string }> {
   const response = await fetch(`${API_BASE_URL}/api/pets`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.message || "Erro ao cadastrar pet");
   }
+  return response.json();
+}
 
+export async function atualizarPet(id: string | number, data: PetData): Promise<{ success: boolean; message: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/pets/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || "Erro ao atualizar pet");
+  }
+  return response.json();
+}
+
+export async function excluirPet(id: string | number): Promise<{ success: boolean; message: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/pets/${id}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || "Erro ao excluir pet");
+  }
   return response.json();
 }
