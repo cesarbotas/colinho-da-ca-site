@@ -1,6 +1,6 @@
 // Configuração da API
 // Quando a API estiver pronta, atualize a URL base aqui
-export const API_BASE_URL = "http://localhost:5000";
+export const API_BASE_URL = "https://colinho-da-ca-api.onrender.com";
 
 export interface ClienteData {
   id?: string | number;
@@ -25,13 +25,13 @@ export interface PetData {
 
 // ... keep existing code (cliente functions lines 25-66)
 export async function listarClientes(): Promise<ClienteData[]> {
-  const response = await fetch(`${API_BASE_URL}/api/clientes`);
+  const response = await fetch(`${API_BASE_URL}/api/v1/clientes`);
   if (!response.ok) throw new Error("Erro ao buscar clientes");
   return response.json();
 }
 
 export async function cadastrarCliente(data: ClienteData): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(`${API_BASE_URL}/api/clientes`, {
+  const response = await fetch(`${API_BASE_URL}/api/v1/clientes`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -44,7 +44,7 @@ export async function cadastrarCliente(data: ClienteData): Promise<{ success: bo
 }
 
 export async function atualizarCliente(id: string | number, data: ClienteData): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(`${API_BASE_URL}/api/clientes/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/api/v1/clientes/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -57,7 +57,7 @@ export async function atualizarCliente(id: string | number, data: ClienteData): 
 }
 
 export async function excluirCliente(id: string | number): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(`${API_BASE_URL}/api/clientes/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/api/v1/clientes/${id}`, {
     method: "DELETE",
   });
   if (!response.ok) {
