@@ -1,7 +1,7 @@
 // Configuração da API
 // Quando a API estiver pronta, atualize a URL base aqui
-// export const API_BASE_URL = "https://colinho-da-ca-api.onrender.com";
-export const API_BASE_URL = "http://localhost:5163";
+export const API_BASE_URL = "https://colinho-da-ca-api.onrender.com";
+// export const API_BASE_URL = "http://localhost:5163";
 
 export interface ClienteData {
   id?: string | number;
