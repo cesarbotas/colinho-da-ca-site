@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ArrowLeft, Loader2, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { cadastrarPet, atualizarPet, type PetData } from "@/lib/api";
+import { cadastrarPet, atualizarPet, listarClientes, PortePet, PortePetLabel, type PetData, type ClienteData } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 interface PetFormProps {
   pet?: PetData | null;
@@ -16,32 +19,57 @@ interface PetFormProps {
 const PetForm = ({ pet, onVoltar }: PetFormProps) => {
   const isEditing = !!pet?.id;
   const [loading, setLoading] = useState(false);
+  const [clientes, setClientes] = useState<ClienteData[]>([]);
+  const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<PetData>({
-    nomePet: pet?.nomePet || "",
-    especie: pet?.especie || "",
+    nome: pet?.nome || "",
+    porte: pet?.porte || "",
     raca: pet?.raca || "",
     idade: pet?.idade || "",
     peso: pet?.peso || "",
     tutor: pet?.tutor || "",
     observacoes: pet?.observacoes || "",
+    clienteId: pet?.clienteId,
   });
+
+  useEffect(() => {
+    const carregarClientes = async () => {
+      try {
+        const response = await listarClientes(1, 100);
+        setClientes(response.data);
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar clientes.",
+          variant: "destructive",
+        });
+      }
+    };
+    carregarClientes();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setFormData((prev) => ({ ...prev, [id]: value }));
   };
 
-  const handleSelectChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, especie: value }));
+  const handlePorteChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, porte: value }));
+  };
+
+  const handleClienteChange = (clienteId: number) => {
+    const cliente = clientes.find(c => c.id === clienteId);
+    setFormData((prev) => ({ ...prev, clienteId, tutor: cliente?.nome || "" }));
+    setOpen(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.nomePet || !formData.especie || !formData.tutor) {
+    if (!formData.nome || !formData.porte || !formData.clienteId) {
       toast({
         title: "Campos obrigatórios",
-        description: "Preencha nome do pet, espécie e tutor.",
+        description: "Preencha nome do pet, porte e tutor.",
         variant: "destructive",
       });
       return;
@@ -81,21 +109,21 @@ const PetForm = ({ pet, onVoltar }: PetFormProps) => {
         </h2>
 
         <div className="space-y-2">
-          <Label htmlFor="nomePet">Nome do Pet *</Label>
-          <Input id="nomePet" placeholder="Digite o nome do pet" value={formData.nomePet} onChange={handleChange} />
+          <Label htmlFor="nome">Nome do Pet *</Label>
+          <Input id="nome" placeholder="Digite o nome do pet" value={formData.nome} onChange={handleChange} />
         </div>
 
         <div className="grid md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="especie">Espécie *</Label>
-            <Select value={formData.especie} onValueChange={handleSelectChange}>
-              <SelectTrigger id="especie">
-                <SelectValue placeholder="Selecione a espécie" />
+            <Label htmlFor="porte">Porte *</Label>
+            <Select value={formData.porte} onValueChange={handlePorteChange}>
+              <SelectTrigger id="porte">
+                <SelectValue placeholder="Selecione o porte" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="cachorro">Cachorro</SelectItem>
-                <SelectItem value="gato">Gato</SelectItem>
-                <SelectItem value="outros">Outros</SelectItem>
+                <SelectItem value={PortePet.PEQUENO}>{PortePetLabel[PortePet.PEQUENO]}</SelectItem>
+                <SelectItem value={PortePet.MEDIO}>{PortePetLabel[PortePet.MEDIO]}</SelectItem>
+                <SelectItem value={PortePet.GRANDE}>{PortePetLabel[PortePet.GRANDE]}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -118,7 +146,46 @@ const PetForm = ({ pet, onVoltar }: PetFormProps) => {
 
         <div className="space-y-2">
           <Label htmlFor="tutor">Tutor Responsável *</Label>
-          <Input id="tutor" placeholder="Nome do tutor" value={formData.tutor} onChange={handleChange} />
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={open}
+                className="w-full justify-between"
+              >
+                {formData.clienteId
+                  ? clientes.find((c) => c.id === formData.clienteId)?.nome
+                  : "Selecione o cliente..."}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0">
+              <Command>
+                <CommandInput placeholder="Buscar cliente..." />
+                <CommandList>
+                  <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                  <CommandGroup>
+                    {clientes.map((cliente) => (
+                      <CommandItem
+                        key={cliente.id}
+                        value={cliente.nome}
+                        onSelect={() => handleClienteChange(cliente.id as number)}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            formData.clienteId === cliente.id ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {cliente.nome}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div className="space-y-2">

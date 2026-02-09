@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { listarPets, excluirPet, type PetData } from "@/lib/api";
+import { listarPets, excluirPet, getPorteLabel, type PetData } from "@/lib/api";
 
 interface PetListProps {
   onNovoPet: () => void;
@@ -20,8 +20,8 @@ const PetList = ({ onNovoPet, onEditarPet }: PetListProps) => {
   const carregarPets = async () => {
     setLoading(true);
     try {
-      const data = await listarPets();
-      setPets(data);
+      const response = await listarPets();
+      setPets(response.data);
     } catch (error) {
       toast({
         title: "Erro",
@@ -82,20 +82,20 @@ const PetList = ({ onNovoPet, onEditarPet }: PetListProps) => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Espécie</TableHead>
+                <TableHead>Nome do Pet</TableHead>
+                <TableHead>Porte</TableHead>
                 <TableHead>Raça</TableHead>
-                <TableHead>Tutor</TableHead>
+                <TableHead>Tutor (Cliente)</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {pets.map((pet) => (
                 <TableRow key={pet.id}>
-                  <TableCell className="font-medium">{pet.nomePet}</TableCell>
-                  <TableCell className="capitalize">{pet.especie}</TableCell>
+                  <TableCell className="font-medium">{pet.nome}</TableCell>
+                  <TableCell>{getPorteLabel(pet.porte)}</TableCell>
                   <TableCell>{pet.raca || "—"}</TableCell>
-                  <TableCell>{pet.tutor}</TableCell>
+                  <TableCell>{pet.clienteNome || pet.tutor}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button variant="outline" size="sm" onClick={() => onEditarPet(pet)}>
