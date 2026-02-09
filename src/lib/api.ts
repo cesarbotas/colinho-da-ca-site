@@ -62,13 +62,13 @@ export async function excluirCliente(id: string | number): Promise<void> {
 
 // Pet CRUD
 export async function listarPets(): Promise<PetData[]> {
-  const response = await fetch(`${API_BASE_URL}/api/pets`);
+  const response = await fetch(`${API_BASE_URL}/api/v1/pets`);
   if (!response.ok) throw new Error("Erro ao buscar pets");
   return response.json();
 }
 
 export async function cadastrarPet(data: PetData): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/pets`, {
+  const response = await fetch(`${API_BASE_URL}/api/v1/pets`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -77,7 +77,7 @@ export async function cadastrarPet(data: PetData): Promise<void> {
 }
 
 export async function atualizarPet(id: string | number, data: PetData): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/pets/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/api/v1/pets/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -86,7 +86,7 @@ export async function atualizarPet(id: string | number, data: PetData): Promise<
 }
 
 export async function excluirPet(id: string | number): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/pets/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/api/v1/pets/${id}`, {
     method: "DELETE",
   });
   if (!response.ok) throw new Error("Erro ao excluir pet");
