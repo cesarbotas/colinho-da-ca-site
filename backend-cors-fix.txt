@@ -1,0 +1,55 @@
+// Adicione este código no Program.cs do backend .NET
+
+try
+{
+    var builder = WebApplication.CreateBuilder(args);
+
+    builder.Services.RegistraDependencias(builder.Configuration);
+
+    builder.Services.AddControllers();
+    
+    // ADICIONE ESTA CONFIGURAÇÃO DE CORS
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowFrontend", policy =>
+        {
+            policy.WithOrigins(
+                "http://localhost:8080",
+                "http://localhost:5173",
+                "http://localhost:3000"
+            )
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+        });
+    });
+    
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
+
+    var app = builder.Build();
+
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
+
+    app.UseHttpsRedirection();
+
+    // ADICIONE ESTA LINHA ANTES DO UseAuthorization
+    app.UseCors("AllowFrontend");
+
+    app.UseAuthorization();
+
+    app.MapControllers();
+
+    app.Run();
+}
+catch (Exception ex)
+{
+    Console.WriteLine(ex.ToString());
+}
+finally
+{
+}

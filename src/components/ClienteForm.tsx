@@ -18,7 +18,7 @@ const ClienteForm = ({ cliente, onVoltar }: ClienteFormProps) => {
   const [formData, setFormData] = useState<ClienteData>({
     nome: cliente?.nome || "",
     email: cliente?.email || "",
-    telefone: cliente?.telefone || "",
+    celular: cliente?.celular || "",
     cpf: cliente?.cpf || "",
     endereco: cliente?.endereco || "",
     observacoes: cliente?.observacoes || "",
@@ -32,10 +32,10 @@ const ClienteForm = ({ cliente, onVoltar }: ClienteFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.nome || !formData.email || !formData.telefone) {
+    if (!formData.nome || !formData.email || !formData.celular) {
       toast({
         title: "Campos obrigatórios",
-        description: "Preencha nome, email e telefone.",
+        description: "Preencha nome, email e celular.",
         variant: "destructive",
       });
       return;
@@ -85,8 +85,8 @@ const ClienteForm = ({ cliente, onVoltar }: ClienteFormProps) => {
             <Input id="email" type="email" placeholder="email@exemplo.com" value={formData.email} onChange={handleChange} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="telefone">Telefone *</Label>
-            <Input id="telefone" placeholder="(00) 00000-0000" value={formData.telefone} onChange={handleChange} />
+            <Label htmlFor="celular">Celular *</Label>
+            <Input id="celular" placeholder="(00) 00000-0000" value={formData.celular} onChange={handleChange} />
           </div>
         </div>
 
