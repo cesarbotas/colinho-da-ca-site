@@ -1,7 +1,5 @@
 // Configuração da API
-// Quando a API estiver pronta, atualize a URL base aqui
-export const API_BASE_URL = "https://colinho-da-ca-api.onrender.com";
-// export const API_BASE_URL = "http://localhost:5163";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://colinho-da-ca-api.onrender.com";
 
 export interface ClienteData {
   id?: string | number;
@@ -32,7 +30,7 @@ export interface PetData {
 }
 
 export async function listarClientes(page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<ClienteData>> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/clientes?page=${page}&pageSize=${pageSize}`);
+  const response = await fetch(`${API_BASE_URL}/api/v1/clientes?Paginacao.NumeroPagina=${page}&Paginacao.QuantidadeRegistros=${pageSize}`);
   if (!response.ok) throw new Error("Erro ao buscar clientes");
   return response.json();
 }
