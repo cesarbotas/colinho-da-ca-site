@@ -3,13 +3,43 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Mail, Phone, MapPin, Clock } from "lucide-react";
+import { Mail, Phone, MapPin, Clock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useState } from "react";
+import { API_BASE_URL } from "@/lib/api";
 
 const SobreContato = () => {
-  const handleSubmit = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    nome: "",
+    email: "",
+    celular: "",
+    assunto: "",
+    mensagem: "",
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Mensagem enviada com sucesso! Entraremos em contato em breve.");
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/sobre/enviar-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      if (!response.ok) throw new Error("Erro ao enviar mensagem");
+      toast.success("Mensagem enviada com sucesso! Entraremos em contato em breve.");
+      setFormData({ nome: "", email: "", celular: "", assunto: "", mensagem: "" });
+    } catch (error) {
+      toast.error("Erro ao enviar mensagem. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const contactInfo = [
@@ -21,12 +51,12 @@ const SobreContato = () => {
     {
       icon: Mail,
       title: "Email",
-      content: "contato@colinhodaca.com.br",
+      content: "colinhodaca@gmail.com",
     },
     {
       icon: MapPin,
       title: "Endereço",
-      content: "São Paulo, SP",
+      content: "Santos, SP",
     },
     {
       icon: Clock,
@@ -59,12 +89,14 @@ const SobreContato = () => {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium mb-2">
+                  <label htmlFor="nome" className="block text-sm font-medium mb-2">
                     Nome
                   </label>
                   <Input
-                    id="name"
+                    id="nome"
                     placeholder="Seu nome completo"
+                    value={formData.nome}
+                    onChange={handleChange}
                     required
                   />
                 </div>
@@ -76,27 +108,45 @@ const SobreContato = () => {
                     id="email"
                     type="email"
                     placeholder="seu@email.com"
+                    value={formData.email}
+                    onChange={handleChange}
                     required
                   />
                 </div>
                 <div>
-                  <label htmlFor="phone" className="block text-sm font-medium mb-2">
-                    Telefone
+                  <label htmlFor="celular" className="block text-sm font-medium mb-2">
+                    Celular
                   </label>
                   <Input
-                    id="phone"
+                    id="celular"
                     type="tel"
                     placeholder="(11) 99999-9999"
+                    value={formData.celular}
+                    onChange={handleChange}
                   />
                 </div>
                 <div>
-                  <label htmlFor="message" className="block text-sm font-medium mb-2">
+                  <label htmlFor="assunto" className="block text-sm font-medium mb-2">
+                    Assunto
+                  </label>
+                  <Input
+                    id="assunto"
+                    placeholder="Assunto da mensagem"
+                    value={formData.assunto}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="mensagem" className="block text-sm font-medium mb-2">
                     Mensagem
                   </label>
                   <Textarea
-                    id="message"
+                    id="mensagem"
                     placeholder="Como podemos ajudar?"
                     rows={5}
+                    value={formData.mensagem}
+                    onChange={handleChange}
                     required
                   />
                 </div>
@@ -104,7 +154,9 @@ const SobreContato = () => {
                   type="submit"
                   className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90"
                   size="lg"
+                  disabled={loading}
                 >
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Enviar Mensagem
                 </Button>
               </form>

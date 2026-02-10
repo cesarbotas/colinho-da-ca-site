@@ -1,12 +1,20 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { ChevronDown, Menu, X } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { ChevronDown, Menu, X, LogOut, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { authService } from "@/lib/api";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const location = useLocation();
+  const navigate = useNavigate();
+  const isAuthenticated = authService.isAuthenticated();
+
+  const handleLogout = () => {
+    authService.logout();
+    navigate("/");
+  };
 
   const menuItems = [
     {
@@ -53,7 +61,9 @@ const Navigation = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-1">
-            {menuItems.map((item) => (
+            {menuItems.map((item) => {
+              if (item.title === "Cadastro" && !isAuthenticated) return null;
+              return (
               <div
                 key={item.title}
                 className="relative group"
@@ -85,7 +95,19 @@ const Navigation = () => {
                   </div>
                 )}
               </div>
-            ))}
+            );
+            })}
+            {!isAuthenticated ? (
+              <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>
+                <LogIn className="w-4 h-4 mr-2" />
+                Entrar
+              </Button>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sair
+              </Button>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -102,7 +124,9 @@ const Navigation = () => {
         {/* Mobile Menu */}
         {isOpen && (
           <div className="md:hidden py-4 animate-in slide-in-from-top-4">
-            {menuItems.map((item) => (
+            {menuItems.map((item) => {
+              if (item.title === "Cadastro" && !isAuthenticated) return null;
+              return (
               <div key={item.title} className="mb-2">
                 <button
                   onClick={() => toggleDropdown(item.title)}
@@ -132,7 +156,19 @@ const Navigation = () => {
                   </div>
                 )}
               </div>
-            ))}
+            );
+            })}
+            {!isAuthenticated ? (
+              <Button variant="ghost" size="sm" onClick={() => navigate("/login")} className="w-full mt-2">
+                <LogIn className="w-4 h-4 mr-2" />
+                Entrar
+              </Button>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={handleLogout} className="w-full mt-2">
+                <LogOut className="w-4 h-4 mr-2" />
+                Sair
+              </Button>
+            )}
           </div>
         )}
       </div>

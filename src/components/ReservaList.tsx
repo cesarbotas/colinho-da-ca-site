@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Loader2, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { listarReservas, excluirReserva, type ReservaData } from "@/lib/api";
@@ -19,12 +20,16 @@ const ReservaList = ({ onNovaReserva, onEditarReserva }: ReservaListProps) => {
   const [deleteId, setDeleteId] = useState<string | number | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [expandedId, setExpandedId] = useState<string | number | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
 
   const carregarReservas = async () => {
     setLoading(true);
     try {
-      const response = await listarReservas();
+      const response = await listarReservas(page, pageSize);
       setReservas(response.data);
+      setTotal(response.total);
     } catch (error) {
       toast({
         title: "Erro",
@@ -38,7 +43,7 @@ const ReservaList = ({ onNovaReserva, onEditarReserva }: ReservaListProps) => {
 
   useEffect(() => {
     carregarReservas();
-  }, []);
+  }, [page, pageSize]);
 
   const handleExcluir = async () => {
     if (deleteId === null) return;
@@ -62,9 +67,25 @@ const ReservaList = ({ onNovaReserva, onEditarReserva }: ReservaListProps) => {
   return (
     <>
       <div className="flex justify-between items-center mb-6">
-        <p className="text-muted-foreground">
-          {loading ? "Carregando..." : `${reservas.length} reserva(s) encontrada(s)`}
-        </p>
+        <div className="flex items-center gap-4">
+          <p className="text-muted-foreground">
+            {loading ? "Carregando..." : `${total} reserva(s) encontrada(s)`}
+          </p>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Exibir:</span>
+            <Select value={pageSize.toString()} onValueChange={(v) => { setPageSize(Number(v)); setPage(1); }}>
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
         <Button onClick={onNovaReserva}>
           <Plus className="mr-2 h-4 w-4" />
           Nova Reserva
@@ -86,11 +107,11 @@ const ReservaList = ({ onNovaReserva, onEditarReserva }: ReservaListProps) => {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12"></TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Qtd. Pets</TableHead>
-                <TableHead>Data Início</TableHead>
-                <TableHead>Data Fim</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead className="w-[30%]">Cliente</TableHead>
+                <TableHead className="w-[15%]">Qtd. Pets</TableHead>
+                <TableHead className="w-[20%]">Data Início</TableHead>
+                <TableHead className="w-[20%]">Data Fim</TableHead>
+                <TableHead className="text-right w-[15%]">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -133,6 +154,28 @@ const ReservaList = ({ onNovaReserva, onEditarReserva }: ReservaListProps) => {
               ))}
             </TableBody>
           </Table>
+        </div>
+      )}
+
+      {!loading && total > pageSize && (
+        <div className="flex justify-center gap-2 mt-6">
+          <Button
+            variant="outline"
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            Anterior
+          </Button>
+          <span className="flex items-center px-4 text-sm text-muted-foreground">
+            Página {page} de {Math.ceil(total / pageSize)}
+          </span>
+          <Button
+            variant="outline"
+            onClick={() => setPage(p => p + 1)}
+            disabled={page >= Math.ceil(total / pageSize)}
+          >
+            Próxima
+          </Button>
         </div>
       )}
 
