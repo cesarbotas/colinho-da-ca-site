@@ -8,7 +8,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ArrowLeft, Loader2, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { cadastrarPet, atualizarPet, listarClientes, PortePet, PortePetLabel, type PetData, type ClienteData } from "@/lib/api";
+import { cadastrarPet, atualizarPet, listarClientes, authService, PortePet, PortePetLabel, type PetData, type ClienteData } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 interface PetFormProps {
@@ -35,8 +35,18 @@ const PetForm = ({ pet, onVoltar }: PetFormProps) => {
   useEffect(() => {
     const carregarClientes = async () => {
       try {
-        const response = await listarClientes(1, 100);
+        const clienteId = authService.getClienteId();
+        const response = await listarClientes(1, 100, clienteId || undefined);
         setClientes(response.data);
+        
+        // Se for novo pet e tiver apenas 1 cliente, seleciona automaticamente
+        if (!isEditing && response.data.length === 1 && clienteId) {
+          setFormData(prev => ({ 
+            ...prev, 
+            clienteId: response.data[0].id as number,
+            tutor: response.data[0].nome 
+          }));
+        }
       } catch (error) {
         toast({
           title: "Erro",
@@ -46,7 +56,7 @@ const PetForm = ({ pet, onVoltar }: PetFormProps) => {
       }
     };
     carregarClientes();
-  }, []);
+  }, [isEditing]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;

@@ -15,7 +15,7 @@ import CadastroPets from "./pages/cadastros/CadastroPets";
 import CadastroReservas from "./pages/cadastros/CadastroReservas";
 import SobreHistoria from "./pages/sobre/SobreHistoria";
 import SobreContato from "./pages/sobre/SobreContato";
-import { Login } from "./pages/auth";
+import { Login, Register } from "./pages/auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +32,7 @@ const App = () => (
           <Route path="/servicos/cuidados" element={<ServicoCuidados />} />
           <Route path="/servicos/hospedagem" element={<ServicoHospedagem />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/cadastro" element={<ProtectedRoute><Cadastro /></ProtectedRoute>} />
           <Route path="/cadastro/cliente" element={<ProtectedRoute><CadastroCliente /></ProtectedRoute>} />
           <Route path="/cadastro/pets" element={<ProtectedRoute><CadastroPets /></ProtectedRoute>} />
