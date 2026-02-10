@@ -1,4 +1,6 @@
 import { useState } from "react";
+import Navigation from "@/components/Navigation";
+import { CalendarCheck } from "lucide-react";
 import ReservaList from "@/components/ReservaList";
 import ReservaForm from "@/components/ReservaForm";
 import { type ReservaData } from "@/lib/api";
@@ -25,22 +27,23 @@ const CadastroReservas = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Reservas de Hospedagem
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Gerencie as reservas de hospedagem dos pets
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
+      <Navigation />
+      <main className="container mx-auto px-4 pt-24 pb-16">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-3 mb-8">
+            <CalendarCheck className="w-10 h-10 text-secondary" />
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              Reservas de Hospedagem
+            </h1>
+          </div>
 
-        {view === "list" ? (
-          <ReservaList onNovaReserva={handleNovaReserva} onEditarReserva={handleEditarReserva} />
-        ) : (
-          <ReservaForm reserva={reservaSelecionada} onVoltar={handleVoltar} />
-        )}
+          {view === "list" ? (
+            <ReservaList onNovaReserva={handleNovaReserva} onEditarReserva={handleEditarReserva} />
+          ) : (
+            <ReservaForm reserva={reservaSelecionada} onVoltar={handleVoltar} />
+          )}
+        </div>
       </main>
     </div>
   );
