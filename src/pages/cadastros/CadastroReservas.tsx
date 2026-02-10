@@ -34,7 +34,7 @@ const CadastroReservas = () => {
           <div className="flex items-center gap-3 mb-8">
             <CalendarCheck className="w-10 h-10 text-secondary" />
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Reservas de Hospedagem
+              Minhas Reservas
             </h1>
           </div>
 

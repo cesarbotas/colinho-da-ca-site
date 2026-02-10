@@ -1,8 +1,12 @@
 import { API_BASE_URL, PaginatedResponse } from "../config";
 import { ReservaData } from "./types";
 
-export async function listarReservas(page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<ReservaData>> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/reservas?Paginacao.NumeroPagina=${page}&Paginacao.QuantidadeRegistros=${pageSize}`);
+export async function listarReservas(page: number = 1, pageSize: number = 10, clienteId?: number): Promise<PaginatedResponse<ReservaData>> {
+  let url = `${API_BASE_URL}/api/v1/reservas?Paginacao.NumeroPagina=${page}&Paginacao.QuantidadeRegistros=${pageSize}`;
+  if (clienteId) {
+    url += `&ClienteId=${clienteId}`;
+  }
+  const response = await fetch(url);
   if (!response.ok) throw new Error("Erro ao buscar reservas");
   return response.json();
 }

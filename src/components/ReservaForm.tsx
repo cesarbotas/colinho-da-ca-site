@@ -8,7 +8,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Loader2, Check, ChevronsUpDown, CalendarIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { cadastrarReserva, atualizarReserva, listarClientes, listarPets, type ReservaData, type ClienteData, type PetData } from "@/lib/api";
+import { cadastrarReserva, atualizarReserva, listarClientes, listarPets, authService, type ReservaData, type ClienteData, type PetData } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -37,8 +37,17 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
   useEffect(() => {
     const carregarClientes = async () => {
       try {
-        const response = await listarClientes(1, 100);
+        const clienteId = authService.getClienteId();
+        const response = await listarClientes(1, 100, clienteId || undefined);
         setClientes(response.data);
+        
+        // Se for nova reserva e tiver apenas 1 cliente, seleciona automaticamente
+        if (!isEditing && response.data.length === 1 && clienteId) {
+          setFormData(prev => ({ 
+            ...prev, 
+            clienteId: response.data[0].id as number
+          }));
+        }
       } catch (error) {
         toast({
           title: "Erro",
@@ -48,7 +57,7 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
       }
     };
     carregarClientes();
-  }, []);
+  }, [isEditing]);
 
   useEffect(() => {
     if (formData.clienteId) {

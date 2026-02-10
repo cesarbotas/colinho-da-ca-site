@@ -2,8 +2,12 @@ import { API_BASE_URL, PaginatedResponse } from "../config";
 import { ClienteData } from "./types";
 import { getAuthHeaders } from "../auth";
 
-export async function listarClientes(page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<ClienteData>> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/clientes?Paginacao.NumeroPagina=${page}&Paginacao.QuantidadeRegistros=${pageSize}`, {
+export async function listarClientes(page: number = 1, pageSize: number = 10, id?: number): Promise<PaginatedResponse<ClienteData>> {
+  let url = `${API_BASE_URL}/api/v1/clientes?Paginacao.NumeroPagina=${page}&Paginacao.QuantidadeRegistros=${pageSize}`;
+  if (id) {
+    url += `&Id=${id}`;
+  }
+  const response = await fetch(url, {
     headers: getAuthHeaders(),
   });
   if (!response.ok) throw new Error("Erro ao buscar clientes");
