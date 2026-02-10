@@ -29,9 +29,8 @@ const Navigation = () => {
       title: "Cadastro",
       path: "/cadastro",
       submenu: [
-        { title: "Cliente", path: "/cadastro/cliente" },
-        { title: "Pets", path: "/cadastro/pets" },
-        { title: "Reservas", path: "/cadastro/reservas" },
+        { title: "Meus Pets", path: "/cadastro/pets" },
+        { title: "Minhas Reservas", path: "/cadastro/reservas" },
       ],
     },
     {

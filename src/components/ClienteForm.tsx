@@ -20,7 +20,6 @@ const ClienteForm = ({ cliente, onVoltar }: ClienteFormProps) => {
     email: cliente?.email || "",
     celular: cliente?.celular || "",
     cpf: cliente?.cpf || "",
-    endereco: cliente?.endereco || "",
     observacoes: cliente?.observacoes || "",
   });
 
@@ -93,11 +92,6 @@ const ClienteForm = ({ cliente, onVoltar }: ClienteFormProps) => {
         <div className="space-y-2">
           <Label htmlFor="cpf">CPF</Label>
           <Input id="cpf" placeholder="000.000.000-00" value={formData.cpf} onChange={handleChange} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="endereco">Endereço</Label>
-          <Input id="endereco" placeholder="Rua, número, bairro" value={formData.endereco} onChange={handleChange} />
         </div>
 
         <div className="space-y-2">

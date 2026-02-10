@@ -34,7 +34,7 @@ const CadastroPets = () => {
           <div className="flex items-center gap-3 mb-8">
             <PawPrint className="w-10 h-10 text-accent" />
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Pets
+              Meus Pets
             </h1>
           </div>
 

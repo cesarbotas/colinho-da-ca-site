@@ -8,22 +8,22 @@ import { Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { authService } from "@/lib/api/auth";
 
-const Login = () => {
+const Register = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({ email: "", senha: "" });
+  const [formData, setFormData] = useState({ nome: "", email: "", senha: "", cpf: "", celular: "" });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await authService.login(formData);
-      toast({ title: "Sucesso!", description: "Login realizado com sucesso." });
+      await authService.register(formData);
+      toast({ title: "Sucesso!", description: "Usuário registrado com sucesso." });
       navigate("/");
     } catch (error) {
       toast({
         title: "Erro",
-        description: error instanceof Error ? error.message : "Erro ao fazer login.",
+        description: error instanceof Error ? error.message : "Erro ao registrar usuário.",
         variant: "destructive",
       });
     } finally {
@@ -35,10 +35,40 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl text-center">Login - Colinho da Ca</CardTitle>
+          <CardTitle className="text-2xl text-center">Registrar - Colinho da Ca</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="nome">Nome</Label>
+              <Input
+                id="nome"
+                type="text"
+                value={formData.nome}
+                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="cpf">CPF</Label>
+              <Input
+                id="cpf"
+                type="text"
+                value={formData.cpf}
+                onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="celular">Celular</Label>
+              <Input
+                id="celular"
+                type="tel"
+                value={formData.celular}
+                onChange={(e) => setFormData({ ...formData, celular: e.target.value })}
+                required
+              />
+            </div>
             <div>
               <Label htmlFor="email">Email</Label>
               <Input
@@ -61,15 +91,15 @@ const Login = () => {
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Entrar
+              Registrar
             </Button>
             <Button
               type="button"
               variant="outline"
               className="w-full"
-              onClick={() => navigate("/register")}
+              onClick={() => navigate("/login")}
             >
-              Criar conta
+              Já tem conta? Fazer login
             </Button>
           </form>
         </CardContent>
@@ -78,4 +108,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Register;
