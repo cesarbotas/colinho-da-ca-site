@@ -5,7 +5,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { listarPets, excluirPet, getPorteLabel, type PetData } from "@/lib/api";
+import { listarPets, excluirPet, getPorteLabel, authService, type PetData } from "@/lib/api";
 
 interface PetListProps {
   onNovoPet: () => void;
@@ -24,7 +24,8 @@ const PetList = ({ onNovoPet, onEditarPet }: PetListProps) => {
   const carregarPets = async () => {
     setLoading(true);
     try {
-      const response = await listarPets(page, pageSize);
+      const clienteId = authService.getClienteId();
+      const response = await listarPets(page, pageSize, clienteId || undefined);
       setPets(response.data);
       setTotal(response.total);
     } catch (error) {
@@ -48,7 +49,7 @@ const PetList = ({ onNovoPet, onEditarPet }: PetListProps) => {
     try {
       await excluirPet(deleteId);
       toast({ title: "Sucesso!", description: "Pet excluído com sucesso." });
-      setPets((prev) => prev.filter((p) => p.id !== deleteId));
+      carregarPets();
     } catch (error) {
       toast({
         title: "Erro",
