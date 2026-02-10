@@ -23,6 +23,7 @@ const Navigation = () => {
       submenu: [
         { title: "Cliente", path: "/cadastro/cliente" },
         { title: "Pets", path: "/cadastro/pets" },
+        { title: "Reservas", path: "/cadastro/reservas" },
       ],
     },
     {

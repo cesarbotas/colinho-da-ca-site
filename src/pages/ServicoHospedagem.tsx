@@ -102,7 +102,7 @@ const ServicoHospedagem = () => {
               <p className="text-muted-foreground mb-6">
                 Entre em contato para verificar disponibilidade e agendar a estadia
               </p>
-              <Link to="/sobre/contato">
+              <Link to="/cadastro/reservas">
                 <Button size="lg" className="bg-gradient-to-r from-accent to-primary hover:opacity-90">
                   Fazer Reserva
                 </Button>
