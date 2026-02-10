@@ -1,6 +1,6 @@
 import Navigation from "@/components/Navigation";
 import { Link } from "react-router-dom";
-import { PawPrint, CalendarCheck } from "lucide-react";
+import { PawPrint, CalendarCheck, User } from "lucide-react";
 
 const Cadastro = () => {
   return (
@@ -8,13 +8,24 @@ const Cadastro = () => {
       <Navigation />
       <main className="container mx-auto px-4 pt-24 pb-16">
         <h1 className="text-4xl md:text-5xl font-bold text-center mb-8 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-          Meus Cadastros
+          Painel
         </h1>
         <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
           Gerencie seus pets e reservas de forma simples e organizada
         </p>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <Link
+            to="/cadastro/dados"
+            className="group p-8 rounded-2xl bg-card border border-border hover:border-primary transition-all hover:shadow-lg hover:shadow-primary/10"
+          >
+            <User className="w-12 h-12 text-primary mb-4 group-hover:scale-110 transition-transform" />
+            <h2 className="text-2xl font-bold mb-2">Meus Dados</h2>
+            <p className="text-muted-foreground">
+              Visualize e edite suas informações pessoais
+            </p>
+          </Link>
+
           <Link
             to="/cadastro/pets"
             className="group p-8 rounded-2xl bg-card border border-border hover:border-primary transition-all hover:shadow-lg hover:shadow-primary/10"
