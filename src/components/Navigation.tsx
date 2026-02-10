@@ -10,6 +10,8 @@ const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const isAuthenticated = authService.isAuthenticated();
+  const userData = authService.getUserData();
+  const primeiroNome = userData?.nome.split(' ')[0] || '';
 
   const handleLogout = () => {
     authService.logout();
@@ -26,19 +28,20 @@ const Navigation = () => {
       ],
     },
     {
-      title: "Cadastro",
-      path: "/cadastro",
-      submenu: [
-        { title: "Meus Pets", path: "/cadastro/pets" },
-        { title: "Minhas Reservas", path: "/cadastro/reservas" },
-      ],
-    },
-    {
       title: "Sobre",
       path: "/sobre",
       submenu: [
         { title: "Nossa História", path: "/sobre/historia" },
         { title: "Contato", path: "/sobre/contato" },
+      ],
+    },
+    {
+      title: isAuthenticated ? primeiroNome : "Painel",
+      path: "/cadastro",
+      submenu: [
+        { title: "Meus Dados", path: "/cadastro/dados" },
+        { title: "Meus Pets", path: "/cadastro/pets" },
+        { title: "Minhas Reservas", path: "/cadastro/reservas" },
       ],
     },
   ];
@@ -61,7 +64,7 @@ const Navigation = () => {
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-1">
             {menuItems.map((item) => {
-              if (item.title === "Cadastro" && !isAuthenticated) return null;
+              if ((item.title === primeiroNome || item.title === "Painel") && !isAuthenticated) return null;
               return (
               <div
                 key={item.title}
@@ -124,7 +127,7 @@ const Navigation = () => {
         {isOpen && (
           <div className="md:hidden py-4 animate-in slide-in-from-top-4">
             {menuItems.map((item) => {
-              if (item.title === "Cadastro" && !isAuthenticated) return null;
+              if ((item.title === primeiroNome || item.title === "Painel") && !isAuthenticated) return null;
               return (
               <div key={item.title} className="mb-2">
                 <button
