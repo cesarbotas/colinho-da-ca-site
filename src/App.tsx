@@ -11,6 +11,7 @@ import ServicoCuidados from "./pages/servicos/ServicoCuidados";
 import ServicoHospedagem from "./pages/servicos/ServicoHospedagem";
 import Cadastro from "./pages/cadastros/Cadastro";
 import CadastroCliente from "./pages/cadastros/CadastroCliente";
+import CadastroDados from "./pages/cadastros/CadastroDados";
 import CadastroPets from "./pages/cadastros/CadastroPets";
 import CadastroReservas from "./pages/cadastros/CadastroReservas";
 import SobreHistoria from "./pages/sobre/SobreHistoria";
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/register" element={<Register />} />
           <Route path="/cadastro" element={<ProtectedRoute><Cadastro /></ProtectedRoute>} />
           <Route path="/cadastro/cliente" element={<ProtectedRoute><CadastroCliente /></ProtectedRoute>} />
+          <Route path="/cadastro/dados" element={<ProtectedRoute><CadastroDados /></ProtectedRoute>} />
           <Route path="/cadastro/pets" element={<ProtectedRoute><CadastroPets /></ProtectedRoute>} />
           <Route path="/cadastro/reservas" element={<ProtectedRoute><CadastroReservas /></ProtectedRoute>} />
           <Route path="/sobre" element={<Sobre />} />
