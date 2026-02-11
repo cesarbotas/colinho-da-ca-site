@@ -3,6 +3,8 @@ export interface PetData {
   nome: string;
   porte: string;
   raca: string;
+  racaId?: number;
+  racaNome?: string;
   idade: string;
   peso: string;
   tutor: string;
