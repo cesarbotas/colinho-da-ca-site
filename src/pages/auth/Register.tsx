@@ -13,11 +13,32 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({ nome: "", email: "", senha: "", cpf: "", celular: "" });
 
+  const handleChange = (field: string, value: string) => {
+    setFormData({ ...formData, [field]: value });
+  };
+
+  const handleBlur = (field: string, value: string) => {
+    let maskedValue = value;
+    
+    if (field === "cpf") {
+      maskedValue = value.replace(/\D/g, "").replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4").slice(0, 14);
+    } else if (field === "celular") {
+      maskedValue = value.replace(/\D/g, "").replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3").slice(0, 15);
+    }
+    
+    setFormData({ ...formData, [field]: maskedValue });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await authService.register(formData);
+      const payload = {
+        ...formData,
+        cpf: formData.cpf?.replace(/\D/g, ""),
+        celular: formData.celular?.replace(/\D/g, ""),
+      };
+      await authService.register(payload);
       toast({ title: "Sucesso!", description: "Usuário registrado com sucesso." });
       navigate("/");
     } catch (error) {
@@ -63,7 +84,8 @@ const Register = () => {
                 id="cpf"
                 type="text"
                 value={formData.cpf}
-                onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                onChange={(e) => handleChange("cpf", e.target.value)}
+                onBlur={(e) => handleBlur("cpf", e.target.value)}
                 required
               />
             </div>
@@ -73,7 +95,8 @@ const Register = () => {
                 id="celular"
                 type="tel"
                 value={formData.celular}
-                onChange={(e) => setFormData({ ...formData, celular: e.target.value })}
+                onChange={(e) => handleChange("celular", e.target.value)}
+                onBlur={(e) => handleBlur("celular", e.target.value)}
                 required
               />
             </div>

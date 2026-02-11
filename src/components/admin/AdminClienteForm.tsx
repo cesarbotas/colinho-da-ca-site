@@ -18,14 +18,27 @@ const AdminClienteForm = ({ cliente, onVoltar }: AdminClienteFormProps) => {
   const [formData, setFormData] = useState<ClienteData>({
     nome: cliente?.nome || "",
     email: cliente?.email || "",
-    celular: cliente?.celular || "",
-    cpf: cliente?.cpf || "",
+    celular: cliente?.celular ? cliente.celular.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3") : "",
+    cpf: cliente?.cpf ? cliente.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") : "",
     observacoes: cliente?.observacoes || "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setFormData((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    let maskedValue = value;
+    
+    if (id === "cpf") {
+      maskedValue = value.replace(/\D/g, "").replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4").slice(0, 14);
+    } else if (id === "celular") {
+      maskedValue = value.replace(/\D/g, "").replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3").slice(0, 15);
+    }
+    
+    setFormData((prev) => ({ ...prev, [id]: maskedValue }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,11 +55,16 @@ const AdminClienteForm = ({ cliente, onVoltar }: AdminClienteFormProps) => {
 
     setLoading(true);
     try {
+      const payload = {
+        ...formData,
+        cpf: formData.cpf?.replace(/\D/g, ""),
+        celular: formData.celular?.replace(/\D/g, ""),
+      };
       if (isEditing) {
-        await atualizarCliente(cliente!.id!, formData);
+        await atualizarCliente(cliente!.id!, payload);
         toast({ title: "Sucesso!", description: "Cliente atualizado com sucesso." });
       } else {
-        await cadastrarCliente(formData);
+        await cadastrarCliente(payload);
         toast({ title: "Sucesso!", description: "Cliente cadastrado com sucesso." });
       }
       onVoltar();
@@ -85,13 +103,13 @@ const AdminClienteForm = ({ cliente, onVoltar }: AdminClienteFormProps) => {
           </div>
           <div className="space-y-2">
             <Label htmlFor="celular">Celular *</Label>
-            <Input id="celular" placeholder="(00) 00000-0000" value={formData.celular} onChange={handleChange} />
+            <Input id="celular" placeholder="(00) 00000-0000" value={formData.celular} onChange={handleChange} onBlur={handleBlur} />
           </div>
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="cpf">CPF</Label>
-          <Input id="cpf" placeholder="000.000.000-00" value={formData.cpf} onChange={handleChange} />
+          <Input id="cpf" placeholder="000.000.000-00" value={formData.cpf} onChange={handleChange} onBlur={handleBlur} />
         </div>
 
         <div className="space-y-2">

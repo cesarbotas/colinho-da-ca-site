@@ -8,7 +8,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ArrowLeft, Loader2, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { cadastrarPet, atualizarPet, listarClientes, authService, PortePet, PortePetLabel, type PetData, type ClienteData } from "@/lib/api";
+import { cadastrarPet, atualizarPet, listarClientes, listarRacas, authService, PortePet, PortePetLabel, type PetData, type ClienteData, type RacaData } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 interface PetFormProps {
@@ -20,11 +20,14 @@ const PetForm = ({ pet, onVoltar }: PetFormProps) => {
   const isEditing = !!pet?.id;
   const [loading, setLoading] = useState(false);
   const [clientes, setClientes] = useState<ClienteData[]>([]);
+  const [racas, setRacas] = useState<RacaData[]>([]);
   const [open, setOpen] = useState(false);
+  const [openRaca, setOpenRaca] = useState(false);
   const [formData, setFormData] = useState<PetData>({
     nome: pet?.nome || "",
     porte: pet?.porte || "",
     raca: pet?.raca || "",
+    racaId: pet?.racaId,
     idade: pet?.idade || "",
     peso: pet?.peso || "",
     tutor: pet?.tutor || "",
@@ -55,7 +58,16 @@ const PetForm = ({ pet, onVoltar }: PetFormProps) => {
         });
       }
     };
+    const carregarRacas = async () => {
+      try {
+        const data = await listarRacas();
+        setRacas(data);
+      } catch (error) {
+        console.error('Erro ao carregar raças:', error);
+      }
+    };
     carregarClientes();
+    carregarRacas();
   }, [isEditing]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -139,7 +151,49 @@ const PetForm = ({ pet, onVoltar }: PetFormProps) => {
           </div>
           <div className="space-y-2">
             <Label htmlFor="raca">Raça</Label>
-            <Input id="raca" placeholder="Raça do pet" value={formData.raca} onChange={handleChange} />
+            <Popover open={openRaca} onOpenChange={setOpenRaca}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={openRaca}
+                  className="w-full justify-between"
+                >
+                  {formData.racaId
+                    ? racas.find((r) => r.id === formData.racaId)?.nome
+                    : "Selecione a raça..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0">
+                <Command>
+                  <CommandInput placeholder="Buscar raça..." />
+                  <CommandList>
+                    <CommandEmpty>Nenhuma raça encontrada.</CommandEmpty>
+                    <CommandGroup>
+                      {racas.map((raca) => (
+                        <CommandItem
+                          key={raca.id}
+                          value={raca.nome}
+                          onSelect={() => {
+                            setFormData((prev) => ({ ...prev, racaId: raca.id }));
+                            setOpenRaca(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              formData.racaId === raca.id ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {raca.nome}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
@@ -156,46 +210,12 @@ const PetForm = ({ pet, onVoltar }: PetFormProps) => {
 
         <div className="space-y-2">
           <Label htmlFor="tutor">Tutor Responsável *</Label>
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={open}
-                className="w-full justify-between"
-              >
-                {formData.clienteId
-                  ? clientes.find((c) => c.id === formData.clienteId)?.nome
-                  : "Selecione o cliente..."}
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-full p-0">
-              <Command>
-                <CommandInput placeholder="Buscar cliente..." />
-                <CommandList>
-                  <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
-                  <CommandGroup>
-                    {clientes.map((cliente) => (
-                      <CommandItem
-                        key={cliente.id}
-                        value={cliente.nome}
-                        onSelect={() => handleClienteChange(cliente.id as number)}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            formData.clienteId === cliente.id ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {cliente.nome}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+          <Input
+            id="tutor"
+            value={clientes.find((c) => c.id === formData.clienteId)?.nome || ""}
+            disabled
+            className="bg-muted"
+          />
         </div>
 
         <div className="space-y-2">

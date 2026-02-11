@@ -28,7 +28,12 @@ const CadastroDados = () => {
         if (clienteId) {
           const response = await listarClientes(1, 1, clienteId);
           if (response.data.length > 0) {
-            setFormData(response.data[0]);
+            const cliente = response.data[0];
+            setFormData({
+              ...cliente,
+              celular: cliente.celular ? cliente.celular.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3") : "",
+              cpf: cliente.cpf ? cliente.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") : "",
+            });
           }
         }
       } catch (error) {
@@ -49,6 +54,19 @@ const CadastroDados = () => {
     setFormData((prev) => ({ ...prev, [id]: value }));
   };
 
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    let maskedValue = value;
+    
+    if (id === "cpf") {
+      maskedValue = value.replace(/\D/g, "").replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4").slice(0, 14);
+    } else if (id === "celular") {
+      maskedValue = value.replace(/\D/g, "").replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3").slice(0, 15);
+    }
+    
+    setFormData((prev) => ({ ...prev, [id]: maskedValue }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nome || !formData.email || !formData.celular || !formData.cpf) {
@@ -62,7 +80,12 @@ const CadastroDados = () => {
 
     setSaving(true);
     try {
-      await atualizarCliente(formData.id!, formData);
+      const payload = {
+        ...formData,
+        cpf: formData.cpf?.replace(/\D/g, ""),
+        celular: formData.celular?.replace(/\D/g, ""),
+      };
+      await atualizarCliente(formData.id!, payload);
       toast({ title: "Sucesso!", description: "Dados atualizados com sucesso." });
       navigate("/cadastro");
     } catch (error) {
@@ -110,13 +133,13 @@ const CadastroDados = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="celular">Celular *</Label>
-                  <Input id="celular" value={formData.celular} onChange={handleChange} required />
+                  <Input id="celular" value={formData.celular} onChange={handleChange} onBlur={handleBlur} required />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="cpf">CPF *</Label>
-                <Input id="cpf" value={formData.cpf} onChange={handleChange} required />
+                <Input id="cpf" value={formData.cpf} onChange={handleChange} onBlur={handleBlur} required />
               </div>
 
               <div className="space-y-2">

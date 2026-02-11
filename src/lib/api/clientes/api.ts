@@ -20,7 +20,10 @@ export async function cadastrarCliente(data: ClienteData): Promise<void> {
     headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     body: JSON.stringify(data),
   });
-  if (!response.ok) throw new Error("Erro ao cadastrar cliente");
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "Erro ao cadastrar cliente" }));
+    throw new Error(error.message || "Erro ao cadastrar cliente");
+  }
 }
 
 export async function atualizarCliente(id: string | number, data: ClienteData): Promise<void> {
@@ -29,7 +32,10 @@ export async function atualizarCliente(id: string | number, data: ClienteData): 
     headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     body: JSON.stringify(data),
   });
-  if (!response.ok) throw new Error("Erro ao atualizar cliente");
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "Erro ao atualizar cliente" }));
+    throw new Error(error.message || "Erro ao atualizar cliente");
+  }
 }
 
 export async function excluirCliente(id: string | number): Promise<void> {
