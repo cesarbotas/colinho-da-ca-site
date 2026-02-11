@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Loader2, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, ChevronDown, ChevronRight, Upload, Check } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { listarReservas, excluirReserva, authService, type ReservaData } from "@/lib/api";
+import { listarReservas, excluirReserva, enviarComprovante, authService, type ReservaData } from "@/lib/api";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -65,6 +65,28 @@ const ReservaList = ({ onNovaReserva, onEditarReserva }: ReservaListProps) => {
       setDeleting(false);
       setDeleteId(null);
     }
+  };
+
+  const handleEnviarComprovante = async (id: string | number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      try {
+        const base64 = reader.result as string;
+        await enviarComprovante(id, base64);
+        toast({ title: "Sucesso!", description: "Comprovante enviado com sucesso." });
+        carregarReservas();
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: error instanceof Error ? error.message : "Erro ao enviar comprovante.",
+          variant: "destructive",
+        });
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -134,19 +156,43 @@ const ReservaList = ({ onNovaReserva, onEditarReserva }: ReservaListProps) => {
                     <TableCell className="font-semibold">R$ {(reserva.valorTotal || 0).toFixed(2)}</TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="sm" onClick={() => onEditarReserva(reserva)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="destructive" size="sm" onClick={() => setDeleteId(reserva.id!)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {reserva.status === 1 && (
+                          <>
+                            <Button variant="outline" size="sm" onClick={() => onEditarReserva(reserva)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button variant="destructive" size="sm" onClick={() => setDeleteId(reserva.id!)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
                   {expandedId === reserva.id && (
                     <TableRow key={`${reserva.id}-details`}>
                       <TableCell colSpan={8} className="bg-muted/30">
-                        <div className="py-2 px-4 space-y-2">
+                        <div className="py-4 px-4 space-y-4">
+                          <div className="grid grid-cols-2 gap-4 p-4 bg-background rounded-lg border">
+                            <div>
+                              <p className="text-xs text-muted-foreground">Período</p>
+                              <p className="text-sm font-medium">
+                                {reserva.dataInicial ? format(new Date(reserva.dataInicial.split('T')[0] + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR }) : "—"} até {reserva.dataFinal ? format(new Date(reserva.dataFinal.split('T')[0] + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR }) : "—"}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Diárias</p>
+                              <p className="text-sm font-medium">{reserva.quantidadeDiarias || 0} diária(s)</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Quantidade de Pets</p>
+                              <p className="text-sm font-medium">{reserva.quantidadePets || 0} pet(s)</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Valor Total</p>
+                              <p className="text-sm font-semibold text-primary">R$ {(reserva.valorTotal || 0).toFixed(2)}</p>
+                            </div>
+                          </div>
                           {reserva.pets && reserva.pets.length > 0 && (
                             <div>
                               <p className="text-sm font-semibold mb-2">Pets:</p>
@@ -157,6 +203,52 @@ const ReservaList = ({ onNovaReserva, onEditarReserva }: ReservaListProps) => {
                               </ul>
                             </div>
                           )}
+                          <div>
+                            <p className="text-sm font-semibold mb-3">Status da Reserva:</p>
+                            <div className="flex items-center gap-2">
+                              {[1, 2, 3, 4, 5].map((step, index) => (
+                                <div key={step} className="flex items-center flex-1">
+                                  <div className="flex flex-col items-center">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                      reserva.statusTimeline?.[step] ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                                    }`}>
+                                      {reserva.statusTimeline?.[step] && <Check className="h-4 w-4" />}
+                                    </div>
+                                    <p className="text-xs mt-1 text-center">
+                                      {step === 1 && 'Criada'}
+                                      {step === 2 && 'Confirmada'}
+                                      {step === 3 && 'Pag. Pendente'}
+                                      {step === 4 && 'Pag. Aprovado'}
+                                      {step === 5 && 'Finalizada'}
+                                    </p>
+                                  </div>
+                                  {index < 4 && (
+                                    <div className={`flex-1 h-1 ${
+                                      reserva.statusTimeline?.[step + 1] ? 'bg-primary' : 'bg-muted'
+                                    }`} />
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex gap-2 mt-4">
+                            {(reserva.status === 2 || reserva.status === 3) && (
+                              <label>
+                                <input
+                                  type="file"
+                                  accept="image/*,application/pdf"
+                                  className="hidden"
+                                  onChange={(e) => handleEnviarComprovante(reserva.id!, e)}
+                                />
+                                <Button size="sm" asChild>
+                                  <span>
+                                    <Upload className="mr-2 h-4 w-4" />
+                                    Enviar Comprovante
+                                  </span>
+                                </Button>
+                              </label>
+                            )}
+                          </div>
                         </div>
                       </TableCell>
                     </TableRow>
