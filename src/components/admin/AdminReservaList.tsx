@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -120,16 +120,16 @@ const AdminReservaList = ({ onNovaReserva, onEditarReserva }: AdminReservaListPr
             </TableHeader>
             <TableBody>
               {reservas.map((reserva) => (
-                <>
-                  <TableRow key={reserva.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setExpandedId(expandedId === reserva.id ? null : reserva.id)}>
+                <Fragment key={reserva.id}>
+                  <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => setExpandedId(expandedId === reserva.id ? null : reserva.id)}>
                     <TableCell>
                       {expandedId === reserva.id ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                     </TableCell>
                     <TableCell className="font-medium">{reserva.clienteNome}</TableCell>
                     <TableCell>{reserva.quantidadePets || reserva.pets?.length || 0}</TableCell>
                     <TableCell>{reserva.quantidadeDiarias || 0}</TableCell>
-                    <TableCell>{reserva.dataInicial ? format(new Date(reserva.dataInicial), "dd/MM/yyyy", { locale: ptBR }) : "—"}</TableCell>
-                    <TableCell>{reserva.dataFinal ? format(new Date(reserva.dataFinal), "dd/MM/yyyy", { locale: ptBR }) : "—"}</TableCell>
+                    <TableCell>{reserva.dataInicial ? format(new Date(reserva.dataInicial.split('T')[0] + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR }) : "—"}</TableCell>
+                    <TableCell>{reserva.dataFinal ? format(new Date(reserva.dataFinal.split('T')[0] + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR }) : "—"}</TableCell>
                     <TableCell className="font-semibold">R$ {(reserva.valorTotal || 0).toFixed(2)}</TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-end gap-2">
@@ -160,7 +160,7 @@ const AdminReservaList = ({ onNovaReserva, onEditarReserva }: AdminReservaListPr
                       </TableCell>
                     </TableRow>
                   )}
-                </>
+                </Fragment>
               ))}
             </TableBody>
           </Table>

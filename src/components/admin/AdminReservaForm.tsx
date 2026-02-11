@@ -41,8 +41,8 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
       return { quantidadeDiarias: 0, valorTotal: 0, valoresPorPet: [] };
     }
 
-    const inicio = new Date(formData.dataInicial);
-    const fim = new Date(formData.dataFinal);
+    const inicio = new Date(formData.dataInicial + 'T12:00:00');
+    const fim = new Date(formData.dataFinal + 'T12:00:00');
     const diarias = Math.ceil((fim.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24));
 
     const valoresPorPet = formData.petIds.map(petId => {
@@ -213,13 +213,13 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-full justify-start text-left font-normal">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formData.dataInicial ? format(new Date(formData.dataInicial), "PPP", { locale: ptBR }) : "Selecione a data"}
+                  {formData.dataInicial ? format(new Date(formData.dataInicial + 'T12:00:00'), "PPP", { locale: ptBR }) : "Selecione a data"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
                 <Calendar
                   mode="single"
-                  selected={formData.dataInicial ? new Date(formData.dataInicial) : undefined}
+                  selected={formData.dataInicial ? new Date(formData.dataInicial + 'T12:00:00') : undefined}
                   onSelect={(date) => {
                     setFormData((prev) => ({ ...prev, dataInicial: date ? format(date, "yyyy-MM-dd") : "" }));
                     setOpenDataInicio(false);
@@ -228,6 +228,12 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
                 />
               </PopoverContent>
             </Popover>
+            <Input
+              type="date"
+              value={formData.dataInicial}
+              onChange={(e) => setFormData((prev) => ({ ...prev, dataInicial: e.target.value }))}
+              className="mt-2"
+            />
           </div>
 
           <div className="space-y-2">
@@ -236,13 +242,13 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-full justify-start text-left font-normal">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formData.dataFinal ? format(new Date(formData.dataFinal), "PPP", { locale: ptBR }) : "Selecione a data"}
+                  {formData.dataFinal ? format(new Date(formData.dataFinal + 'T12:00:00'), "PPP", { locale: ptBR }) : "Selecione a data"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
                 <Calendar
                   mode="single"
-                  selected={formData.dataFinal ? new Date(formData.dataFinal) : undefined}
+                  selected={formData.dataFinal ? new Date(formData.dataFinal + 'T12:00:00') : undefined}
                   onSelect={(date) => {
                     setFormData((prev) => ({ ...prev, dataFinal: date ? format(date, "yyyy-MM-dd") : "" }));
                     setOpenDataFim(false);
@@ -251,6 +257,12 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
                 />
               </PopoverContent>
             </Popover>
+            <Input
+              type="date"
+              value={formData.dataFinal}
+              onChange={(e) => setFormData((prev) => ({ ...prev, dataFinal: e.target.value }))}
+              className="mt-2"
+            />
           </div>
         </div>
 

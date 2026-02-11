@@ -116,7 +116,7 @@ const PetList = ({ onNovoPet, onEditarPet }: PetListProps) => {
                 <TableRow key={pet.id}>
                   <TableCell className="font-medium">{pet.nome}</TableCell>
                   <TableCell>{getPorteLabel(pet.porte)}</TableCell>
-                  <TableCell>{pet.raca || "—"}</TableCell>
+                  <TableCell>{pet.racaNome || "—"}</TableCell>
                   <TableCell>{pet.clienteNome || pet.tutor}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
