@@ -18,7 +18,10 @@ export async function cadastrarReserva(data: ReservaData): Promise<void> {
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!response.ok) throw new Error("Erro ao cadastrar reserva");
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "Erro ao cadastrar reserva" }));
+    throw new Error(error.message || "Erro ao cadastrar reserva");
+  }
 }
 
 export async function atualizarReserva(id: string | number, data: ReservaData): Promise<void> {
@@ -27,7 +30,10 @@ export async function atualizarReserva(id: string | number, data: ReservaData): 
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!response.ok) throw new Error("Erro ao atualizar reserva");
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "Erro ao atualizar reserva" }));
+    throw new Error(error.message || "Erro ao atualizar reserva");
+  }
 }
 
 export async function excluirReserva(id: string | number): Promise<void> {

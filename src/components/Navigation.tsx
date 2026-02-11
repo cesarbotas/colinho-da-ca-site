@@ -11,7 +11,7 @@ const Navigation = () => {
   const navigate = useNavigate();
   const isAuthenticated = authService.isAuthenticated();
   const userData = authService.getUserData();
-  const primeiroNome = userData?.nome.split(' ')[0] || '';
+  const primeiroNome = userData?.nome?.split(' ')[0] || '';
   const isAdmin = authService.isAdmin();
   const isCliente = authService.isCliente();
 
