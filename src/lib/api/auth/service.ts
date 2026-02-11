@@ -50,6 +50,24 @@ export const authService = {
     return userData?.clienteId || null;
   },
 
+  getPerfil(): number | null {
+    const userData = this.getUserData();
+    return userData?.perfis?.[0]?.id || null;
+  },
+
+  hasPerfil(perfilId: number): boolean {
+    const userData = this.getUserData();
+    return userData?.perfis?.some(p => p.id === perfilId) || false;
+  },
+
+  isAdmin(): boolean {
+    return this.hasPerfil(1);
+  },
+
+  isCliente(): boolean {
+    return this.hasPerfil(2);
+  },
+
   isAuthenticated(): boolean {
     return !!this.getToken();
   },

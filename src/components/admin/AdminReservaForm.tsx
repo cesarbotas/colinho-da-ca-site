@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -9,17 +8,17 @@ import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Loader2, Check, ChevronsUpDown, CalendarIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { cadastrarReserva, atualizarReserva, listarClientes, listarPets, authService, type ReservaData, type ClienteData, type PetData } from "@/lib/api";
+import { cadastrarReserva, atualizarReserva, listarClientes, listarPets, type ReservaData, type ClienteData, type PetData } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-interface ReservaFormProps {
+interface AdminReservaFormProps {
   reserva?: ReservaData | null;
   onVoltar: () => void;
 }
 
-const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
+const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
   const isEditing = !!reserva?.id;
   const [loading, setLoading] = useState(false);
   const [clientes, setClientes] = useState<ClienteData[]>([]);
@@ -60,17 +59,8 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
   useEffect(() => {
     const carregarClientes = async () => {
       try {
-        const clienteId = authService.getClienteId();
-        const response = await listarClientes(1, 100, clienteId || undefined);
+        const response = await listarClientes(1, 100);
         setClientes(response.data);
-        
-        // Se for nova reserva e tiver apenas 1 cliente, seleciona automaticamente
-        if (!isEditing && response.data.length === 1 && clienteId) {
-          setFormData(prev => ({ 
-            ...prev, 
-            clienteId: response.data[0].id as number
-          }));
-        }
       } catch (error) {
         toast({
           title: "Erro",
@@ -80,7 +70,7 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
       }
     };
     carregarClientes();
-  }, [isEditing]);
+  }, []);
 
   useEffect(() => {
     if (formData.clienteId) {
@@ -174,11 +164,46 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
 
         <div className="space-y-2">
           <Label>Cliente *</Label>
-          <Input
-            value={clientes.find((c) => c.id === formData.clienteId)?.nome || ""}
-            disabled
-            className="bg-muted"
-          />
+          <Popover open={openCliente} onOpenChange={setOpenCliente}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={openCliente}
+                className="w-full justify-between"
+              >
+                {formData.clienteId
+                  ? clientes.find((c) => c.id === formData.clienteId)?.nome
+                  : "Selecione o cliente..."}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0">
+              <Command>
+                <CommandInput placeholder="Buscar cliente..." />
+                <CommandList>
+                  <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                  <CommandGroup>
+                    {clientes.map((cliente) => (
+                      <CommandItem
+                        key={cliente.id}
+                        value={cliente.nome}
+                        onSelect={() => handleClienteChange(cliente.id as number)}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            formData.clienteId === cliente.id ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {cliente.nome}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div className="grid md:grid-cols-2 gap-4">
@@ -228,8 +253,6 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
             </Popover>
           </div>
         </div>
-
-
 
         {formData.clienteId > 0 && (
           <div className="space-y-2">
@@ -315,4 +338,4 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
   );
 };
 
-export default ReservaForm;
+export default AdminReservaForm;

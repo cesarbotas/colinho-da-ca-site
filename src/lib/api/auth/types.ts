@@ -18,5 +18,6 @@ export interface AuthResponse {
     nome: string;
     email: string;
     clienteId?: number;
+    perfis?: Array<{ id: number; nome: string }>;
   };
 }
