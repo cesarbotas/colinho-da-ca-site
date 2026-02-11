@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Loader2, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, ChevronDown, ChevronRight, Check, Eye } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { listarReservas, excluirReserva, type ReservaData } from "@/lib/api";
+import { listarReservas, excluirReserva, confirmarReserva, aprovarPagamento, buscarComprovante, type ReservaData } from "@/lib/api";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -20,6 +20,7 @@ const AdminReservaList = ({ onNovaReserva, onEditarReserva }: AdminReservaListPr
   const [deleteId, setDeleteId] = useState<string | number | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [expandedId, setExpandedId] = useState<string | number | null>(null);
+  const [comprovanteModal, setComprovanteModal] = useState<{ open: boolean; data: any }>({ open: false, data: null });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
@@ -63,6 +64,47 @@ const AdminReservaList = ({ onNovaReserva, onEditarReserva }: AdminReservaListPr
     } finally {
       setDeleting(false);
       setDeleteId(null);
+    }
+  };
+
+  const handleConfirmar = async (id: string | number) => {
+    try {
+      await confirmarReserva(id);
+      toast({ title: "Sucesso!", description: "Reserva confirmada com sucesso." });
+      carregarReservas();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao confirmar reserva.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAprovarPagamento = async (id: string | number) => {
+    try {
+      await aprovarPagamento(id);
+      toast({ title: "Sucesso!", description: "Pagamento aprovado com sucesso." });
+      carregarReservas();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao aprovar pagamento.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleVerComprovante = async (id: string | number) => {
+    try {
+      const data = await buscarComprovante(id);
+      setComprovanteModal({ open: true, data });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Comprovante não encontrado.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -145,7 +187,27 @@ const AdminReservaList = ({ onNovaReserva, onEditarReserva }: AdminReservaListPr
                   {expandedId === reserva.id && (
                     <TableRow key={`${reserva.id}-details`}>
                       <TableCell colSpan={8} className="bg-muted/30">
-                        <div className="py-2 px-4 space-y-2">
+                        <div className="py-4 px-4 space-y-4">
+                          <div className="grid grid-cols-2 gap-4 p-4 bg-background rounded-lg border">
+                            <div>
+                              <p className="text-xs text-muted-foreground">Período</p>
+                              <p className="text-sm font-medium">
+                                {reserva.dataInicial ? format(new Date(reserva.dataInicial.split('T')[0] + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR }) : "—"} até {reserva.dataFinal ? format(new Date(reserva.dataFinal.split('T')[0] + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR }) : "—"}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Diárias</p>
+                              <p className="text-sm font-medium">{reserva.quantidadeDiarias || 0} diária(s)</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Quantidade de Pets</p>
+                              <p className="text-sm font-medium">{reserva.quantidadePets || 0} pet(s)</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Valor Total</p>
+                              <p className="text-sm font-semibold text-primary">R$ {(reserva.valorTotal || 0).toFixed(2)}</p>
+                            </div>
+                          </div>
                           {reserva.pets && reserva.pets.length > 0 && (
                             <div>
                               <p className="text-sm font-semibold mb-2">Pets:</p>
@@ -156,6 +218,54 @@ const AdminReservaList = ({ onNovaReserva, onEditarReserva }: AdminReservaListPr
                               </ul>
                             </div>
                           )}
+                          <div>
+                            <p className="text-sm font-semibold mb-3">Status da Reserva:</p>
+                            <div className="flex items-center gap-2">
+                              {[1, 2, 3, 4, 5].map((step, index) => (
+                                <div key={step} className="flex items-center flex-1">
+                                  <div className="flex flex-col items-center">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                      reserva.statusTimeline?.[step] ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                                    }`}>
+                                      {reserva.statusTimeline?.[step] && <Check className="h-4 w-4" />}
+                                    </div>
+                                    <p className="text-xs mt-1 text-center">
+                                      {step === 1 && 'Criada'}
+                                      {step === 2 && 'Confirmada'}
+                                      {step === 3 && 'Pag. Pendente'}
+                                      {step === 4 && 'Pag. Aprovado'}
+                                      {step === 5 && 'Finalizada'}
+                                    </p>
+                                  </div>
+                                  {index < 4 && (
+                                    <div className={`flex-1 h-1 ${
+                                      reserva.statusTimeline?.[step + 1] ? 'bg-primary' : 'bg-muted'
+                                    }`} />
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex gap-2 mt-4">
+                            {reserva.status === 1 && (
+                              <Button size="sm" onClick={() => handleConfirmar(reserva.id!)}>
+                                <Check className="mr-2 h-4 w-4" />
+                                Confirmar Reserva
+                              </Button>
+                            )}
+                            {reserva.status === 3 && (
+                              <>
+                                <Button size="sm" variant="outline" onClick={() => handleVerComprovante(reserva.id!)}>
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  Ver Comprovante
+                                </Button>
+                                <Button size="sm" onClick={() => handleAprovarPagamento(reserva.id!)}>
+                                  <Check className="mr-2 h-4 w-4" />
+                                  Aprovar Pagamento
+                                </Button>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -203,6 +313,33 @@ const AdminReservaList = ({ onNovaReserva, onEditarReserva }: AdminReservaListPr
               {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Excluir
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={comprovanteModal.open} onOpenChange={(open) => !open && setComprovanteModal({ open: false, data: null })}>
+        <AlertDialogContent className="max-w-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Comprovante de Pagamento</AlertDialogTitle>
+          </AlertDialogHeader>
+          {comprovanteModal.data && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Observações:</p>
+                <p className="text-sm">{comprovanteModal.data.observacoesPagamento || "—"}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">Comprovante:</p>
+                <iframe 
+                  src={comprovanteModal.data.comprovantePagamento} 
+                  className="w-full h-[600px] rounded border"
+                  title="Comprovante de Pagamento"
+                />
+              </div>
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel>Fechar</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

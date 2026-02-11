@@ -6,7 +6,12 @@ export interface ReservaData {
   dataFinal: string;
   observacoes?: string;
   pets?: Array<{ id: number; nome: string; valorDiaria?: number }>;
+  petIds?: number[];
   quantidadeDiarias?: number;
   quantidadePets?: number;
   valorTotal?: number;
+  status?: number;
+  comprovantePagamento?: string;
+  statusTimeline?: { [key: string]: boolean };
+  historico?: any[];
 }
