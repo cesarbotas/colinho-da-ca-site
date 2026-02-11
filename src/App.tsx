@@ -14,6 +14,10 @@ import CadastroCliente from "./pages/cadastros/CadastroCliente";
 import CadastroDados from "./pages/cadastros/CadastroDados";
 import CadastroPets from "./pages/cadastros/CadastroPets";
 import CadastroReservas from "./pages/cadastros/CadastroReservas";
+import Admin from "./pages/admin/Admin";
+import AdminClientes from "./pages/admin/AdminClientes";
+import AdminPets from "./pages/admin/AdminPets";
+import AdminReservas from "./pages/admin/AdminReservas";
 import SobreHistoria from "./pages/sobre/SobreHistoria";
 import SobreContato from "./pages/sobre/SobreContato";
 import { Login, Register } from "./pages/auth";
@@ -39,6 +43,10 @@ const App = () => (
           <Route path="/cadastro/dados" element={<ProtectedRoute><CadastroDados /></ProtectedRoute>} />
           <Route path="/cadastro/pets" element={<ProtectedRoute><CadastroPets /></ProtectedRoute>} />
           <Route path="/cadastro/reservas" element={<ProtectedRoute><CadastroReservas /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+          <Route path="/admin/clientes" element={<ProtectedRoute><AdminClientes /></ProtectedRoute>} />
+          <Route path="/admin/pets" element={<ProtectedRoute><AdminPets /></ProtectedRoute>} />
+          <Route path="/admin/reservas" element={<ProtectedRoute><AdminReservas /></ProtectedRoute>} />
           <Route path="/sobre" element={<Sobre />} />
           <Route path="/sobre/historia" element={<SobreHistoria />} />
           <Route path="/sobre/contato" element={<SobreContato />} />

@@ -5,16 +5,16 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Loader2, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { listarReservas, excluirReserva, authService, type ReservaData } from "@/lib/api";
+import { listarReservas, excluirReserva, type ReservaData } from "@/lib/api";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-interface ReservaListProps {
+interface AdminReservaListProps {
   onNovaReserva: () => void;
   onEditarReserva: (reserva: ReservaData) => void;
 }
 
-const ReservaList = ({ onNovaReserva, onEditarReserva }: ReservaListProps) => {
+const AdminReservaList = ({ onNovaReserva, onEditarReserva }: AdminReservaListProps) => {
   const [reservas, setReservas] = useState<ReservaData[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | number | null>(null);
@@ -27,8 +27,7 @@ const ReservaList = ({ onNovaReserva, onEditarReserva }: ReservaListProps) => {
   const carregarReservas = async () => {
     setLoading(true);
     try {
-      const clienteId = authService.getClienteId();
-      const response = await listarReservas(page, pageSize, clienteId || undefined);
+      const response = await listarReservas(page, pageSize);
       setReservas(response.data || []);
       setTotal(response.total || 0);
     } catch (error) {
@@ -211,4 +210,4 @@ const ReservaList = ({ onNovaReserva, onEditarReserva }: ReservaListProps) => {
   );
 };
 
-export default ReservaList;
+export default AdminReservaList;
