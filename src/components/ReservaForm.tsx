@@ -44,7 +44,7 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
 
     const inicio = new Date(formData.dataInicial + 'T12:00:00');
     const fim = new Date(formData.dataFinal + 'T12:00:00');
-    const diarias = Math.ceil((fim.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24));
+    const diarias = Math.max(1, Math.ceil((fim.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24)));
 
     const valoresPorPet = formData.petIds.map(petId => {
       const pet = pets.find(p => p.id === petId);
@@ -131,6 +131,15 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
       return;
     }
 
+    if (new Date(formData.dataInicial) > new Date(formData.dataFinal)) {
+      toast({
+        title: "Datas inválidas",
+        description: "A data inicial não pode ser maior que a data final.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const payload = {
@@ -188,7 +197,7 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-full justify-start text-left font-normal">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formData.dataInicial ? format(new Date(formData.dataInicial + 'T12:00:00'), "PPP", { locale: ptBR }) : "Selecione a data"}
+                  {formData.dataInicial ? format(new Date(formData.dataInicial + 'T12:00:00'), "dd/MM/yyyy") : "Selecione a data"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
@@ -196,28 +205,30 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
                   mode="single"
                   selected={formData.dataInicial ? new Date(formData.dataInicial + 'T12:00:00') : undefined}
                   onSelect={(date) => {
-                    setFormData((prev) => ({ ...prev, dataInicial: date ? format(date, "yyyy-MM-dd") : "" }));
+                    const newDataInicial = date ? format(date, "yyyy-MM-dd") : "";
+                    if (formData.dataFinal && newDataInicial > formData.dataFinal) {
+                      toast({
+                        title: "Data inválida",
+                        description: "A data inicial não pode ser maior que a data final.",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    setFormData((prev) => ({ ...prev, dataInicial: newDataInicial }));
                     setOpenDataInicio(false);
                   }}
                   locale={ptBR}
                 />
               </PopoverContent>
             </Popover>
-            <Input
-              type="date"
-              value={formData.dataInicial}
-              onChange={(e) => setFormData((prev) => ({ ...prev, dataInicial: e.target.value }))}
-              className="mt-2"
-            />
           </div>
-
           <div className="space-y-2">
             <Label>Data Fim *</Label>
             <Popover open={openDataFim} onOpenChange={setOpenDataFim}>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-full justify-start text-left font-normal">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formData.dataFinal ? format(new Date(formData.dataFinal + 'T12:00:00'), "PPP", { locale: ptBR }) : "Selecione a data"}
+                  {formData.dataFinal ? format(new Date(formData.dataFinal + 'T12:00:00'), "dd/MM/yyyy") : "Selecione a data"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
@@ -225,19 +236,22 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
                   mode="single"
                   selected={formData.dataFinal ? new Date(formData.dataFinal + 'T12:00:00') : undefined}
                   onSelect={(date) => {
-                    setFormData((prev) => ({ ...prev, dataFinal: date ? format(date, "yyyy-MM-dd") : "" }));
+                    const newDataFinal = date ? format(date, "yyyy-MM-dd") : "";
+                    if (formData.dataInicial && newDataFinal < formData.dataInicial) {
+                      toast({
+                        title: "Data inválida",
+                        description: "A data final não pode ser menor que a data inicial.",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    setFormData((prev) => ({ ...prev, dataFinal: newDataFinal }));
                     setOpenDataFim(false);
                   }}
                   locale={ptBR}
                 />
               </PopoverContent>
             </Popover>
-            <Input
-              type="date"
-              value={formData.dataFinal}
-              onChange={(e) => setFormData((prev) => ({ ...prev, dataFinal: e.target.value }))}
-              className="mt-2"
-            />
           </div>
         </div>
 
