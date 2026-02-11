@@ -5,5 +5,8 @@ export interface ReservaData {
   dataInicial: string;
   dataFinal: string;
   observacoes?: string;
-  pets?: Array<{ id: number; nome: string }>;
+  pets?: Array<{ id: number; nome: string; valorDiaria?: number }>;
+  quantidadeDiarias?: number;
+  quantidadePets?: number;
+  valorTotal?: number;
 }

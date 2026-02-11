@@ -12,6 +12,8 @@ const Navigation = () => {
   const isAuthenticated = authService.isAuthenticated();
   const userData = authService.getUserData();
   const primeiroNome = userData?.nome.split(' ')[0] || '';
+  const isAdmin = authService.isAdmin();
+  const isCliente = authService.isCliente();
 
   const handleLogout = () => {
     authService.logout();
@@ -35,16 +37,31 @@ const Navigation = () => {
         { title: "Contato", path: "/sobre/contato" },
       ],
     },
-    {
-      title: isAuthenticated ? primeiroNome : "Painel",
+  ];
+
+  if (isAdmin) {
+    menuItems.push({
+      title: "Administração",
+      path: "/admin",
+      submenu: [
+        { title: "Clientes", path: "/admin/clientes" },
+        { title: "Pets", path: "/admin/pets" },
+        { title: "Reservas", path: "/admin/reservas" },
+      ],
+    });
+  }
+  
+  if (isCliente) {
+    menuItems.push({
+      title: primeiroNome || "Painel",
       path: "/cadastro",
       submenu: [
         { title: "Meus Dados", path: "/cadastro/dados" },
         { title: "Meus Pets", path: "/cadastro/pets" },
         { title: "Minhas Reservas", path: "/cadastro/reservas" },
       ],
-    },
-  ];
+    });
+  }
 
   const toggleDropdown = (title: string) => {
     setOpenDropdown(openDropdown === title ? null : title);
@@ -54,18 +71,14 @@ const Navigation = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               Colinho da Ca
             </h1>
           </Link>
 
-          {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-1">
-            {menuItems.map((item) => {
-              if ((item.title === primeiroNome || item.title === "Painel") && !isAuthenticated) return null;
-              return (
+            {menuItems.map((item) => (
               <div
                 key={item.title}
                 className="relative group"
@@ -80,7 +93,6 @@ const Navigation = () => {
                   <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />
                 </Link>
                 
-                {/* Dropdown */}
                 {openDropdown === item.title && (
                   <div className="absolute top-full left-0 mt-1 w-56 bg-card border border-border rounded-lg shadow-lg py-2 animate-in fade-in slide-in-from-top-2">
                     {item.submenu.map((subitem) => (
@@ -97,8 +109,7 @@ const Navigation = () => {
                   </div>
                 )}
               </div>
-            );
-            })}
+            ))}
             {!isAuthenticated ? (
               <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>
                 <LogIn className="w-4 h-4 mr-2" />
@@ -112,7 +123,6 @@ const Navigation = () => {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
           <Button
             variant="ghost"
             size="icon"
@@ -123,12 +133,9 @@ const Navigation = () => {
           </Button>
         </div>
 
-        {/* Mobile Menu */}
         {isOpen && (
           <div className="md:hidden py-4 animate-in slide-in-from-top-4">
-            {menuItems.map((item) => {
-              if ((item.title === primeiroNome || item.title === "Painel") && !isAuthenticated) return null;
-              return (
+            {menuItems.map((item) => (
               <div key={item.title} className="mb-2">
                 <button
                   onClick={() => toggleDropdown(item.title)}
@@ -158,8 +165,7 @@ const Navigation = () => {
                   </div>
                 )}
               </div>
-            );
-            })}
+            ))}
             {!isAuthenticated ? (
               <Button variant="ghost" size="sm" onClick={() => navigate("/login")} className="w-full mt-2">
                 <LogIn className="w-4 h-4 mr-2" />
