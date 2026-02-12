@@ -11,8 +11,16 @@ export interface ReservaData {
   quantidadePets?: number;
   valorTotal?: number;
   valorDesconto?: number;
+  valorFinal?: number;
   status?: number;
   comprovantePagamento?: string;
+  dataPagamento?: string | null;
+  observacoesPagamento?: string | null;
   statusTimeline?: { [key: string]: boolean };
-  historico?: any[];
+  historico?: Array<{
+    status: number;
+    usuarioId: number;
+    usuarioNome: string;
+    dataAlteracao: string;
+  }>;
 }

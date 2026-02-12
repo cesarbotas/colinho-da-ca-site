@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Loader2, ChevronDown, ChevronRight, Check, Eye, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Plus, Pencil, Trash2, Loader2, ChevronDown, ChevronRight, Check, Eye, X, DollarSign } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { listarReservas, excluirReserva, confirmarReserva, aprovarPagamento, buscarComprovante, cancelarReserva, type ReservaData } from "@/lib/api";
+import { listarReservas, excluirReserva, confirmarReserva, aprovarPagamento, buscarComprovante, cancelarReserva, aplicarDesconto, type ReservaData } from "@/lib/api";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -21,6 +22,9 @@ const AdminReservaList = ({ onNovaReserva, onEditarReserva }: AdminReservaListPr
   const [deleting, setDeleting] = useState(false);
   const [expandedId, setExpandedId] = useState<string | number | null>(null);
   const [comprovanteModal, setComprovanteModal] = useState<{ open: boolean; data: any }>({ open: false, data: null });
+  const [descontoModal, setDescontoModal] = useState<{ open: boolean; id: string | number | null; valor: string }>({ open: false, id: null, valor: "" });
+  const [confirmarModal, setConfirmarModal] = useState<string | number | null>(null);
+  const [cancelarModal, setCancelarModal] = useState<string | number | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
@@ -71,6 +75,7 @@ const AdminReservaList = ({ onNovaReserva, onEditarReserva }: AdminReservaListPr
     try {
       await confirmarReserva(id);
       toast({ title: "Sucesso!", description: "Reserva confirmada com sucesso." });
+      setConfirmarModal(null);
       carregarReservas();
     } catch (error) {
       toast({
@@ -112,6 +117,7 @@ const AdminReservaList = ({ onNovaReserva, onEditarReserva }: AdminReservaListPr
     try {
       await cancelarReserva(id);
       toast({ title: "Sucesso!", description: "Reserva cancelada com sucesso." });
+      setCancelarModal(null);
       carregarReservas();
     } catch (error) {
       toast({
@@ -120,6 +126,27 @@ const AdminReservaList = ({ onNovaReserva, onEditarReserva }: AdminReservaListPr
         variant: "destructive",
       });
     }
+  };
+
+  const handleAplicarDesconto = async () => {
+    if (!descontoModal.id) return;
+    try {
+      await aplicarDesconto(descontoModal.id, parseFloat(descontoModal.valor));
+      toast({ title: "Sucesso!", description: "Desconto aplicado com sucesso." });
+      setDescontoModal({ open: false, id: null, valor: "" });
+      carregarReservas();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao aplicar desconto.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const abrirModalDesconto = (id: string | number) => {
+    const reserva = reservas.find(r => r.id === id);
+    setDescontoModal({ open: true, id, valor: (reserva?.valorDesconto || 0).toString() });
   };
 
   return (
@@ -186,10 +213,15 @@ const AdminReservaList = ({ onNovaReserva, onEditarReserva }: AdminReservaListPr
                     <TableCell>{reserva.quantidadeDiarias || 0}</TableCell>
                     <TableCell>{reserva.dataInicial ? format(new Date(reserva.dataInicial.split('T')[0] + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR }) : "—"}</TableCell>
                     <TableCell>{reserva.dataFinal ? format(new Date(reserva.dataFinal.split('T')[0] + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR }) : "—"}</TableCell>
-                    <TableCell className="font-semibold">R$ {(reserva.valorTotal || 0).toFixed(2)}</TableCell>
+                    <TableCell className="font-semibold">R$ {((reserva.valorTotal || 0) - (reserva.valorDesconto || 0)).toFixed(2)}</TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      {reserva.status !== 5 && reserva.status !== 6 && (
+                          {reserva.status !== 5 && reserva.status !== 6 && (
                         <div className="flex justify-end gap-2">
+                          {reserva.status === 1 && (
+                            <Button variant="outline" size="sm" onClick={() => abrirModalDesconto(reserva.id!)}>
+                              <DollarSign className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button variant="outline" size="sm" onClick={() => onEditarReserva(reserva)}>
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -284,11 +316,11 @@ const AdminReservaList = ({ onNovaReserva, onEditarReserva }: AdminReservaListPr
                           <div className="flex gap-2 mt-4">
                             {reserva.status === 1 && (
                               <>
-                                <Button size="sm" onClick={() => handleConfirmar(reserva.id!)}>
+                                <Button size="sm" onClick={() => setConfirmarModal(reserva.id!)}>
                                   <Check className="mr-2 h-4 w-4" />
                                   Confirmar Reserva
                                 </Button>
-                                <Button size="sm" variant="destructive" onClick={() => handleCancelarReserva(reserva.id!)}>
+                                <Button size="sm" variant="destructive" onClick={() => setCancelarModal(reserva.id!)}>
                                   <X className="mr-2 h-4 w-4" />
                                   Cancelar Reserva
                                 </Button>
@@ -304,7 +336,7 @@ const AdminReservaList = ({ onNovaReserva, onEditarReserva }: AdminReservaListPr
                                   <Check className="mr-2 h-4 w-4" />
                                   Aprovar Pagamento
                                 </Button>
-                                <Button size="sm" variant="destructive" onClick={() => handleCancelarReserva(reserva.id!)}>
+                                <Button size="sm" variant="destructive" onClick={() => setCancelarModal(reserva.id!)}>
                                   <X className="mr-2 h-4 w-4" />
                                   Cancelar Reserva
                                 </Button>
@@ -385,6 +417,107 @@ const AdminReservaList = ({ onNovaReserva, onEditarReserva }: AdminReservaListPr
           )}
           <AlertDialogFooter>
             <AlertDialogCancel>Fechar</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={descontoModal.open} onOpenChange={(open) => !open && setDescontoModal({ open: false, id: null, valor: "" })}>
+        <AlertDialogContent className="max-w-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Conceder Desconto</AlertDialogTitle>
+          </AlertDialogHeader>
+          {descontoModal.id && (() => {
+            const reserva = reservas.find(r => r.id === descontoModal.id);
+            return reserva ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Cliente</p>
+                    <p className="text-sm font-medium">{reserva.clienteNome}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Período</p>
+                    <p className="text-sm font-medium">
+                      {reserva.dataInicial ? format(new Date(reserva.dataInicial.split('T')[0] + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR }) : "—"} até {reserva.dataFinal ? format(new Date(reserva.dataFinal.split('T')[0] + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR }) : "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Diárias</p>
+                    <p className="text-sm font-medium">{reserva.quantidadeDiarias || 0} diária(s)</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Quantidade de Pets</p>
+                    <p className="text-sm font-medium">{reserva.quantidadePets || 0} pet(s)</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Subtotal</p>
+                    <p className="text-sm font-medium">R$ {(reserva.valorTotal || 0).toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Desconto Atual</p>
+                    <p className="text-sm font-medium text-green-600">- R$ {(reserva.valorDesconto || 0).toFixed(2)}</p>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Novo Valor do Desconto</label>
+                  <Input
+                    type="number"
+                    placeholder="Valor do desconto"
+                    value={descontoModal.valor}
+                    onChange={(e) => setDescontoModal({ ...descontoModal, valor: e.target.value })}
+                    step="0.01"
+                    min="0"
+                    className="mt-2"
+                  />
+                </div>
+                <div className="p-4 bg-primary/10 rounded-lg">
+                  <p className="text-xs text-muted-foreground">Valor Final</p>
+                  <p className="text-lg font-semibold text-primary">
+                    R$ {((reserva.valorTotal || 0) - parseFloat(descontoModal.valor || "0")).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            ) : null;
+          })()}
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleAplicarDesconto}>
+              Conceder
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmarModal !== null} onOpenChange={(open) => !open && setConfirmarModal(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Reserva</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja confirmar esta reserva?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => confirmarModal && handleConfirmar(confirmarModal)}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={cancelarModal !== null} onOpenChange={(open) => !open && setCancelarModal(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar Reserva</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja cancelar esta reserva? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Não</AlertDialogCancel>
+            <AlertDialogAction onClick={() => cancelarModal && handleCancelarReserva(cancelarModal)}>
+              Sim, Cancelar
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

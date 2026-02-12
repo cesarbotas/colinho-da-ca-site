@@ -8,9 +8,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ArrowLeft, Loader2, Check, ChevronsUpDown, CalendarIcon, X, Percent } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { cadastrarReserva, atualizarReserva, listarClientes, listarPets, cancelarReserva, aplicarDesconto, type ReservaData, type ClienteData, type PetData } from "@/lib/api";
+import { cadastrarReserva, atualizarReserva, listarClientes, listarPets, cancelarReserva, aplicarDesconto, confirmarReserva, type ReservaData, type ClienteData, type PetData } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -29,6 +30,8 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
   const [openDataInicio, setOpenDataInicio] = useState(false);
   const [openDataFim, setOpenDataFim] = useState(false);
   const [openDesconto, setOpenDesconto] = useState(false);
+  const [openCancelar, setOpenCancelar] = useState(false);
+  const [openConfirmar, setOpenConfirmar] = useState(false);
   const [valorDesconto, setValorDesconto] = useState("");
   const [formData, setFormData] = useState({
     clienteId: reserva?.clienteId || 0,
@@ -56,11 +59,17 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
     });
 
     const valorTotal = valoresPorPet.reduce((sum, p) => sum + p.valorPet, 0);
-    const desconto = reserva?.valorDesconto || 0;
+    const desconto = parseFloat(valorDesconto) || reserva?.valorDesconto || 0;
     const valorFinal = valorTotal - desconto;
 
     return { quantidadeDiarias: diarias, valorTotal, valorDesconto: desconto, valorFinal, valoresPorPet };
-  }, [formData.dataInicial, formData.dataFinal, formData.petIds, pets, reserva?.valorDesconto]);
+  }, [formData.dataInicial, formData.dataFinal, formData.petIds, pets, reserva?.valorDesconto, valorDesconto]);
+
+  useEffect(() => {
+    if (isEditing && reserva?.valorDesconto) {
+      setValorDesconto(reserva.valorDesconto.toString());
+    }
+  }, [isEditing, reserva?.valorDesconto]);
 
   useEffect(() => {
     const carregarClientes = async () => {
@@ -170,11 +179,31 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
     try {
       await cancelarReserva(reserva.id);
       toast({ title: "Sucesso!", description: "Reserva cancelada com sucesso." });
+      setOpenCancelar(false);
       onVoltar();
     } catch (error) {
       toast({
         title: "Erro",
         description: error instanceof Error ? error.message : "Erro ao cancelar reserva.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmar = async () => {
+    if (!reserva?.id) return;
+    setLoading(true);
+    try {
+      await confirmarReserva(reserva.id);
+      toast({ title: "Sucesso!", description: "Reserva confirmada com sucesso." });
+      setOpenConfirmar(false);
+      onVoltar();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao confirmar reserva.",
         variant: "destructive",
       });
     } finally {
@@ -370,12 +399,27 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
           {isEditing ? "Salvar Alterações" : "Cadastrar Reserva"}
         </Button>
         
+        {isEditing && reserva?.status === 1 && (
+          <Button 
+            variant="default" 
+            size="lg" 
+            type="button" 
+            onClick={() => setOpenConfirmar(true)} 
+            disabled={loading}
+            className="w-full"
+          >
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Check className="mr-2 h-4 w-4" />
+            Confirmar Reserva
+          </Button>
+        )}
+        
         {isEditing && reserva?.status && reserva.status <= 4 && (
           <Button 
             variant="destructive" 
             size="lg" 
             type="button" 
-            onClick={handleCancelar} 
+            onClick={() => setOpenCancelar(true)} 
             disabled={loading}
             className="w-full"
           >
@@ -484,9 +528,80 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
                 </DialogContent>
               </Dialog>
             )}
+
+            {isEditing && reserva?.status && (
+              <div className="border-t pt-3">
+                <p className="text-xs font-semibold mb-2">Status:</p>
+                <div className="flex items-center gap-1">
+                  {reserva.status === 6 ? (
+                    <div className="flex items-center justify-center w-full">
+                      <div className="flex flex-col items-center">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center bg-red-500 text-white">
+                          <X className="h-3 w-3" />
+                        </div>
+                        <p className="text-xs mt-1 text-red-500 font-semibold">Cancelada</p>
+                      </div>
+                    </div>
+                  ) : (
+                    [1, 2, 3, 4, 5].map((step, index) => (
+                      <div key={step} className="flex items-center flex-1">
+                        <div className="flex flex-col items-center">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                            reserva.statusTimeline?.[step] ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                          }`}>
+                            {reserva.statusTimeline?.[step] && <Check className="h-3 w-3" />}
+                          </div>
+                        </div>
+                        {index < 4 && (
+                          <div className={`flex-1 h-0.5 ${
+                            reserva.statusTimeline?.[step + 1] ? 'bg-primary' : 'bg-muted'
+                          }`} />
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      <AlertDialog open={openConfirmar} onOpenChange={setOpenConfirmar}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Reserva</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja confirmar esta reserva?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmar} disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={openCancelar} onOpenChange={setOpenCancelar}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar Reserva</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja cancelar esta reserva? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Não</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelar} disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Sim, Cancelar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
