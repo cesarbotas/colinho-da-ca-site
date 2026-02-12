@@ -137,7 +137,7 @@ const ReservaList = ({ onNovaReserva, onEditarReserva }: ReservaListProps) => {
                 <TableHead className="w-[10%]">Diárias</TableHead>
                 <TableHead className="w-[15%]">Data Início</TableHead>
                 <TableHead className="w-[15%]">Data Fim</TableHead>
-                <TableHead className="w-[15%]">Valor Total</TableHead>
+                <TableHead className="w-[15%]">Valor Final</TableHead>
                 <TableHead className="text-right w-[15%]">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -153,7 +153,7 @@ const ReservaList = ({ onNovaReserva, onEditarReserva }: ReservaListProps) => {
                     <TableCell>{reserva.quantidadeDiarias || 0}</TableCell>
                     <TableCell>{reserva.dataInicial ? format(new Date(reserva.dataInicial.split('T')[0] + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR }) : "—"}</TableCell>
                     <TableCell>{reserva.dataFinal ? format(new Date(reserva.dataFinal.split('T')[0] + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR }) : "—"}</TableCell>
-                    <TableCell className="font-semibold">R$ {(reserva.valorTotal || 0).toFixed(2)}</TableCell>
+                    <TableCell className="font-semibold">R$ {((reserva.valorTotal || 0) - (reserva.valorDesconto || 0)).toFixed(2)}</TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-end gap-2">
                         {reserva.status === 1 && (
@@ -189,8 +189,16 @@ const ReservaList = ({ onNovaReserva, onEditarReserva }: ReservaListProps) => {
                               <p className="text-sm font-medium">{reserva.quantidadePets || 0} pet(s)</p>
                             </div>
                             <div>
-                              <p className="text-xs text-muted-foreground">Valor Total</p>
-                              <p className="text-sm font-semibold text-primary">R$ {(reserva.valorTotal || 0).toFixed(2)}</p>
+                              <p className="text-xs text-muted-foreground">Subtotal</p>
+                              <p className="text-sm font-medium">R$ {(reserva.valorTotal || 0).toFixed(2)}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Desconto</p>
+                              <p className="text-sm font-medium text-green-600">- R$ {(reserva.valorDesconto || 0).toFixed(2)}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Valor Final</p>
+                              <p className="text-sm font-semibold text-primary">R$ {((reserva.valorTotal || 0) - (reserva.valorDesconto || 0)).toFixed(2)}</p>
                             </div>
                           </div>
                           {reserva.pets && reserva.pets.length > 0 && (

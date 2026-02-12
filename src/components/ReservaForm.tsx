@@ -328,10 +328,18 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
               </div>
             </div>
 
-            <div className="border-t pt-3">
+            <div className="border-t pt-3 space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-bold">Total:</span>
-                <span className="text-2xl font-bold text-primary">R$ {calculos.valorTotal.toFixed(2)}</span>
+                <span className="text-xs text-muted-foreground">Subtotal:</span>
+                <span className="text-sm font-medium">R$ {calculos.valorTotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-muted-foreground">Desconto:</span>
+                <span className="text-sm font-medium text-green-600">- R$ {(reserva?.valorDesconto || 0).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center pt-2 border-t">
+                <span className="text-sm font-bold">Valor Final:</span>
+                <span className="text-2xl font-bold text-primary">R$ {(calculos.valorTotal - (reserva?.valorDesconto || 0)).toFixed(2)}</span>
               </div>
             </div>
           </div>
