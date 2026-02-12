@@ -111,3 +111,16 @@ export async function aplicarDesconto(id: string | number, valorDesconto: number
     throw new Error(error.message || "Erro ao aplicar desconto");
   }
 }
+
+export async function aplicarCupom(id: string | number, codigoCupom: string, valorTotal: number, quantidadePets: number, quantidadeDiarias: number): Promise<{ valorTotal: number; valorDesconto: number; valorFinal: number; cupomAplicado: string; cupomId?: number }> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/reservas/${id}/aplicar-cupom`, {
+    method: "POST",
+    headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ codigoCupom, valorTotal, quantidadePets, quantidadeDiarias }),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "Erro ao aplicar cupom" }));
+    throw new Error(error.message || "Cupom inválido ou expirado");
+  }
+  return response.json();
+}

@@ -7,9 +7,9 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Loader2, Check, ChevronsUpDown, CalendarIcon } from "lucide-react";
+import { ArrowLeft, Loader2, Check, ChevronsUpDown, CalendarIcon, Ticket } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { cadastrarReserva, atualizarReserva, listarClientes, listarPets, authService, type ReservaData, type ClienteData, type PetData } from "@/lib/api";
+import { cadastrarReserva, atualizarReserva, listarClientes, listarPets, authService, aplicarCupom, type ReservaData, type ClienteData, type PetData } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -22,11 +22,16 @@ interface ReservaFormProps {
 const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
   const isEditing = !!reserva?.id;
   const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
   const [clientes, setClientes] = useState<ClienteData[]>([]);
   const [pets, setPets] = useState<PetData[]>([]);
   const [openCliente, setOpenCliente] = useState(false);
   const [openDataInicio, setOpenDataInicio] = useState(false);
   const [openDataFim, setOpenDataFim] = useState(false);
+  const [codigoCupom, setCodigoCupom] = useState("");
+  const [cupomId, setCupomId] = useState<number | null>(null);
+  const [valorDescontoLocal, setValorDescontoLocal] = useState(0);
+  const [aplicandoCupom, setAplicandoCupom] = useState(false);
   const [formData, setFormData] = useState({
     clienteId: reserva?.clienteId || 0,
     petIds: reserva?.pets?.map(p => p.id) || [],
@@ -39,7 +44,7 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
 
   const calculos = useMemo(() => {
     if (!formData.dataInicial || !formData.dataFinal || formData.petIds.length === 0) {
-      return { quantidadeDiarias: 0, valorTotal: 0, valoresPorPet: [] };
+      return { quantidadeDiarias: 0, valorTotal: 0, valorDesconto: 0, valorFinal: 0, valoresPorPet: [] };
     }
 
     const inicio = new Date(formData.dataInicial + 'T12:00:00');
@@ -53,12 +58,14 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
     });
 
     const valorTotal = valoresPorPet.reduce((sum, p) => sum + p.valorPet, 0);
+    const valorFinal = valorTotal - valorDescontoLocal;
 
-    return { quantidadeDiarias: diarias, valorTotal, valoresPorPet };
-  }, [formData.dataInicial, formData.dataFinal, formData.petIds, pets]);
+    return { quantidadeDiarias: diarias, valorTotal, valorDesconto: valorDescontoLocal, valorFinal, valoresPorPet };
+  }, [formData.dataInicial, formData.dataFinal, formData.petIds, pets, valorDescontoLocal]);
 
   useEffect(() => {
     const carregarClientes = async () => {
+      setLoadingData(true);
       try {
         const clienteId = authService.getClienteId();
         const response = await listarClientes(1, 100, clienteId || undefined);
@@ -77,6 +84,8 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
           description: "Erro ao carregar clientes.",
           variant: "destructive",
         });
+      } finally {
+        setLoadingData(false);
       }
     };
     carregarClientes();
@@ -105,6 +114,9 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
 
   const handleClienteChange = (clienteId: number) => {
     setFormData((prev) => ({ ...prev, clienteId, petIds: [] }));
+    setValorDescontoLocal(0);
+    setCodigoCupom("");
+    setCupomId(null);
     setOpenCliente(false);
   };
 
@@ -117,6 +129,41 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
         : prev.petIds;
       return { ...prev, petIds };
     });
+    setValorDescontoLocal(0);
+    setCodigoCupom("");
+    setCupomId(null);
+  };
+
+  const handleAplicarCupom = async () => {
+    if (!codigoCupom.trim()) {
+      toast({ title: "Erro", description: "Informe o código do cupom.", variant: "destructive" });
+      return;
+    }
+    if (calculos.quantidadeDiarias === 0 || formData.petIds.length === 0) {
+      toast({ title: "Erro", description: "Selecione pets e datas antes de aplicar o cupom.", variant: "destructive" });
+      return;
+    }
+    setAplicandoCupom(true);
+    try {
+      const resultado = await aplicarCupom(
+        0,
+        codigoCupom, 
+        calculos.valorTotal, 
+        formData.petIds.length, 
+        calculos.quantidadeDiarias
+      );
+      setValorDescontoLocal(resultado.valorDesconto);
+      setCupomId(resultado.cupomId || null);
+      toast({ title: "Sucesso!", description: "Cupom aplicado com sucesso." });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao aplicar cupom.",
+        variant: "destructive",
+      });
+    } finally {
+      setAplicandoCupom(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -142,11 +189,20 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
 
     setLoading(true);
     try {
+      const usuarioId = authService.getUserData()?.id || 0;
       const payload = {
-        ...formData,
+        clienteId: formData.clienteId,
+        usuarioId,
+        dataInicial: formData.dataInicial,
+        dataFinal: formData.dataFinal,
         quantidadeDiarias: calculos.quantidadeDiarias,
         quantidadePets: formData.petIds.length,
         valorTotal: calculos.valorTotal,
+        valorDesconto: valorDescontoLocal,
+        valorFinal: calculos.valorFinal,
+        cupomId: cupomId,
+        observacoes: formData.observacoes,
+        petIds: formData.petIds,
       };
       
       if (isEditing) {
@@ -175,6 +231,11 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
         Voltar para a lista
       </Button>
 
+      {loadingData ? (
+        <div className="flex justify-center items-center py-24">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      ) : (
       <div className="grid md:grid-cols-3 gap-6">
         <form onSubmit={handleSubmit} className="md:col-span-2 space-y-6 bg-card p-8 rounded-2xl border border-border shadow-lg">
         <h2 className="text-2xl font-semibold">
@@ -215,6 +276,8 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
                       return;
                     }
                     setFormData((prev) => ({ ...prev, dataInicial: newDataInicial }));
+                    setValorDescontoLocal(0);
+                    setCodigoCupom("");
                     setOpenDataInicio(false);
                   }}
                   locale={ptBR}
@@ -246,6 +309,8 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
                       return;
                     }
                     setFormData((prev) => ({ ...prev, dataFinal: newDataFinal }));
+                    setValorDescontoLocal(0);
+                    setCodigoCupom("");
                     setOpenDataFim(false);
                   }}
                   locale={ptBR}
@@ -273,7 +338,7 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
                       disabled={!formData.petIds.includes(pet.id as number) && formData.petIds.length >= 3}
                     />
                     <label htmlFor={`pet-${pet.id}`} className="text-sm cursor-pointer">
-                      {pet.nome} - {pet.raca || "Sem raça"}
+                      {pet.nome} - {pet.racaNome || "Sem raça"}
                     </label>
                   </div>
                 ))
@@ -335,16 +400,40 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs text-muted-foreground">Desconto:</span>
-                <span className="text-sm font-medium text-green-600">- R$ {(reserva?.valorDesconto || 0).toFixed(2)}</span>
+                <span className="text-sm font-medium text-green-600">- R$ {calculos.valorDesconto.toFixed(2)}</span>
               </div>
               <div className="flex justify-between items-center pt-2 border-t">
                 <span className="text-sm font-bold">Valor Final:</span>
-                <span className="text-2xl font-bold text-primary">R$ {(calculos.valorTotal - (reserva?.valorDesconto || 0)).toFixed(2)}</span>
+                <span className="text-2xl font-bold text-primary">R$ {calculos.valorFinal.toFixed(2)}</span>
               </div>
             </div>
+
+            {calculos.valorTotal > 0 && (
+              <div className="border-t pt-3 space-y-2">
+                <Label htmlFor="cupom">Cupom de Desconto</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="cupom"
+                    placeholder="Código do cupom"
+                    value={codigoCupom}
+                    onChange={(e) => setCodigoCupom(e.target.value.toUpperCase())}
+                    disabled={aplicandoCupom}
+                  />
+                  <Button onClick={handleAplicarCupom} disabled={aplicandoCupom || !codigoCupom.trim()} size="sm">
+                    {aplicandoCupom && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    <Ticket className="mr-2 h-4 w-4" />
+                    Aplicar
+                  </Button>
+                </div>
+                {codigoCupom && valorDescontoLocal > 0 && (
+                  <p className="text-xs text-green-600">Cupom aplicado: {codigoCupom}</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
+      )}
     </>
   );
 };

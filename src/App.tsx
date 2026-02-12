@@ -14,6 +14,8 @@ import CadastroCliente from "./pages/cadastros/CadastroCliente";
 import CadastroDados from "./pages/cadastros/CadastroDados";
 import CadastroPets from "./pages/cadastros/CadastroPets";
 import CadastroReservas from "./pages/cadastros/CadastroReservas";
+import CadastroCupons from "./pages/cadastros/CadastroCupons";
+import AdminCupons from "./pages/admin/AdminCupons";
 import Admin from "./pages/admin/Admin";
 import AdminClientes from "./pages/admin/AdminClientes";
 import AdminPets from "./pages/admin/AdminPets";
@@ -47,6 +49,7 @@ const App = () => (
           <Route path="/admin/clientes" element={<ProtectedRoute><AdminClientes /></ProtectedRoute>} />
           <Route path="/admin/pets" element={<ProtectedRoute><AdminPets /></ProtectedRoute>} />
           <Route path="/admin/reservas" element={<ProtectedRoute><AdminReservas /></ProtectedRoute>} />
+          <Route path="/admin/cupons" element={<ProtectedRoute><AdminCupons /></ProtectedRoute>} />
           <Route path="/sobre" element={<Sobre />} />
           <Route path="/sobre/historia" element={<SobreHistoria />} />
           <Route path="/sobre/contato" element={<SobreContato />} />

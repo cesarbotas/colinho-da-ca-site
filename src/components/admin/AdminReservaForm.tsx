@@ -374,7 +374,7 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
                       disabled={!formData.petIds.includes(pet.id as number) && formData.petIds.length >= 3}
                     />
                     <label htmlFor={`pet-${pet.id}`} className="text-sm cursor-pointer">
-                      {pet.nome} - {pet.raca || "Sem raça"}
+                      {pet.nome} - {pet.racaNome || "Sem raça"}
                     </label>
                   </div>
                 ))
