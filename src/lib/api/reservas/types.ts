@@ -10,6 +10,7 @@ export interface ReservaData {
   quantidadeDiarias?: number;
   quantidadePets?: number;
   valorTotal?: number;
+  valorDesconto?: number;
   status?: number;
   comprovantePagamento?: string;
   statusTimeline?: { [key: string]: boolean };

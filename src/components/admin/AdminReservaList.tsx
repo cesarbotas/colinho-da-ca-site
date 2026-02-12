@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Loader2, ChevronDown, ChevronRight, Check, Eye } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, ChevronDown, ChevronRight, Check, Eye, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { listarReservas, excluirReserva, confirmarReserva, aprovarPagamento, buscarComprovante, type ReservaData } from "@/lib/api";
+import { listarReservas, excluirReserva, confirmarReserva, aprovarPagamento, buscarComprovante, cancelarReserva, type ReservaData } from "@/lib/api";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -108,6 +108,20 @@ const AdminReservaList = ({ onNovaReserva, onEditarReserva }: AdminReservaListPr
     }
   };
 
+  const handleCancelarReserva = async (id: string | number) => {
+    try {
+      await cancelarReserva(id);
+      toast({ title: "Sucesso!", description: "Reserva cancelada com sucesso." });
+      carregarReservas();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao cancelar reserva.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <div className="flex justify-between items-center mb-6">
@@ -174,14 +188,16 @@ const AdminReservaList = ({ onNovaReserva, onEditarReserva }: AdminReservaListPr
                     <TableCell>{reserva.dataFinal ? format(new Date(reserva.dataFinal.split('T')[0] + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR }) : "—"}</TableCell>
                     <TableCell className="font-semibold">R$ {(reserva.valorTotal || 0).toFixed(2)}</TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="sm" onClick={() => onEditarReserva(reserva)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="destructive" size="sm" onClick={() => setDeleteId(reserva.id!)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      {reserva.status !== 5 && reserva.status !== 6 && (
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" size="sm" onClick={() => onEditarReserva(reserva)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="destructive" size="sm" onClick={() => setDeleteId(reserva.id!)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
                   {expandedId === reserva.id && (
@@ -204,8 +220,16 @@ const AdminReservaList = ({ onNovaReserva, onEditarReserva }: AdminReservaListPr
                               <p className="text-sm font-medium">{reserva.quantidadePets || 0} pet(s)</p>
                             </div>
                             <div>
-                              <p className="text-xs text-muted-foreground">Valor Total</p>
-                              <p className="text-sm font-semibold text-primary">R$ {(reserva.valorTotal || 0).toFixed(2)}</p>
+                              <p className="text-xs text-muted-foreground">Subtotal</p>
+                              <p className="text-sm font-medium">R$ {(reserva.valorTotal || 0).toFixed(2)}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Desconto</p>
+                              <p className="text-sm font-medium text-green-600">- R$ {(reserva.valorDesconto || 0).toFixed(2)}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Valor Final</p>
+                              <p className="text-sm font-semibold text-primary">R$ {((reserva.valorTotal || 0) - (reserva.valorDesconto || 0)).toFixed(2)}</p>
                             </div>
                           </div>
                           {reserva.pets && reserva.pets.length > 0 && (
@@ -221,37 +245,54 @@ const AdminReservaList = ({ onNovaReserva, onEditarReserva }: AdminReservaListPr
                           <div>
                             <p className="text-sm font-semibold mb-3">Status da Reserva:</p>
                             <div className="flex items-center gap-2">
-                              {[1, 2, 3, 4, 5].map((step, index) => (
-                                <div key={step} className="flex items-center flex-1">
+                              {reserva.status === 6 ? (
+                                <div className="flex items-center justify-center w-full">
                                   <div className="flex flex-col items-center">
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                                      reserva.statusTimeline?.[step] ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                                    }`}>
-                                      {reserva.statusTimeline?.[step] && <Check className="h-4 w-4" />}
+                                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-red-500 text-white">
+                                      <X className="h-4 w-4" />
                                     </div>
-                                    <p className="text-xs mt-1 text-center">
-                                      {step === 1 && 'Criada'}
-                                      {step === 2 && 'Confirmada'}
-                                      {step === 3 && 'Pag. Pendente'}
-                                      {step === 4 && 'Pag. Aprovado'}
-                                      {step === 5 && 'Finalizada'}
-                                    </p>
+                                    <p className="text-xs mt-1 text-center text-red-500 font-semibold">Cancelada</p>
                                   </div>
-                                  {index < 4 && (
-                                    <div className={`flex-1 h-1 ${
-                                      reserva.statusTimeline?.[step + 1] ? 'bg-primary' : 'bg-muted'
-                                    }`} />
-                                  )}
                                 </div>
-                              ))}
+                              ) : (
+                                [1, 2, 3, 4, 5].map((step, index) => (
+                                  <div key={step} className="flex items-center flex-1">
+                                    <div className="flex flex-col items-center">
+                                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                        reserva.statusTimeline?.[step] ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                                      }`}>
+                                        {reserva.statusTimeline?.[step] && <Check className="h-4 w-4" />}
+                                      </div>
+                                      <p className="text-xs mt-1 text-center">
+                                        {step === 1 && 'Criada'}
+                                        {step === 2 && 'Confirmada'}
+                                        {step === 3 && 'Pag. Pendente'}
+                                        {step === 4 && 'Pag. Aprovado'}
+                                        {step === 5 && 'Finalizada'}
+                                      </p>
+                                    </div>
+                                    {index < 4 && (
+                                      <div className={`flex-1 h-1 ${
+                                        reserva.statusTimeline?.[step + 1] ? 'bg-primary' : 'bg-muted'
+                                      }`} />
+                                    )}
+                                  </div>
+                                ))
+                              )}
                             </div>
                           </div>
                           <div className="flex gap-2 mt-4">
                             {reserva.status === 1 && (
-                              <Button size="sm" onClick={() => handleConfirmar(reserva.id!)}>
-                                <Check className="mr-2 h-4 w-4" />
-                                Confirmar Reserva
-                              </Button>
+                              <>
+                                <Button size="sm" onClick={() => handleConfirmar(reserva.id!)}>
+                                  <Check className="mr-2 h-4 w-4" />
+                                  Confirmar Reserva
+                                </Button>
+                                <Button size="sm" variant="destructive" onClick={() => handleCancelarReserva(reserva.id!)}>
+                                  <X className="mr-2 h-4 w-4" />
+                                  Cancelar Reserva
+                                </Button>
+                              </>
                             )}
                             {reserva.status === 3 && (
                               <>
@@ -262,6 +303,10 @@ const AdminReservaList = ({ onNovaReserva, onEditarReserva }: AdminReservaListPr
                                 <Button size="sm" onClick={() => handleAprovarPagamento(reserva.id!)}>
                                   <Check className="mr-2 h-4 w-4" />
                                   Aprovar Pagamento
+                                </Button>
+                                <Button size="sm" variant="destructive" onClick={() => handleCancelarReserva(reserva.id!)}>
+                                  <X className="mr-2 h-4 w-4" />
+                                  Cancelar Reserva
                                 </Button>
                               </>
                             )}
