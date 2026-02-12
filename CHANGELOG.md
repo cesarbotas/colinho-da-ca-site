@@ -57,7 +57,26 @@
   - `src/components/ReservaList.tsx`
   - `src/pages/cadastros/CadastroReservas.tsx`
 
-### 7. Página de Contato
+### 7. Sistema de Cupons (CRUD Completo)
+- **Recursos**:
+  - 4 tipos de cupom: % Total, % Pet Mín, % Pet Diárias, Fixo Mín
+  - Campos: código, descrição, tipo, percentual, valorFixo
+  - Campos opcionais: minimoValorTotal, minimoPets, minimoDiarias, dataInicio, dataFim
+  - Inativação de cupom (não permite edição quando inativo)
+  - Listagem com badges de tipo e status
+  - Paginação completa
+- **Arquivos**:
+  - `src/lib/api/cupons/`: types.ts, api.ts, index.ts
+  - `src/components/CupomForm.tsx`
+  - `src/components/CupomList.tsx`
+  - `src/pages/admin/AdminCupons.tsx`
+- **Endpoints**:
+  - GET `/api/v1/cupons` - Listar (paginado)
+  - POST `/api/v1/cupons` - Cadastrar
+  - PUT `/api/v1/cupons/{id}` - Alterar
+  - POST `/api/v1/cupons/{id}/inativar` - Inativar
+
+### 8. Página de Contato
 - **Atualizações**:
   - Email: colinhodaca@gmail.com
   - Endereço: Santos, SP
@@ -66,7 +85,7 @@
   - Integração com API: `/api/v1/sobre/enviar-email`
 - **Arquivo**: `src/pages/sobre/SobreContato.tsx`
 
-### 8. Navegação Dinâmica
+### 9. Navegação Dinâmica
 - **Recursos**:
   - Menu "Cadastro" visível apenas quando autenticado
   - Botão "Login" quando não autenticado
@@ -74,7 +93,7 @@
   - Logout redireciona para homepage (/)
 - **Arquivo**: `src/components/Navigation.tsx`
 
-### 9. Rotas Protegidas
+### 10. Rotas Protegidas
 - **Implementação**: Wrapper `ProtectedRoute` em rotas de cadastro
 - **Comportamento**: Redireciona para /login se não autenticado
 - **Arquivo**: `src/App.tsx`
@@ -113,6 +132,7 @@ const [pageSize, setPageSize] = useState(10);
 - **Clientes**: `/api/v1/clientes`
 - **Pets**: `/api/v1/pets`
 - **Reservas**: `/api/v1/reservas`
+- **Cupons**: `/api/v1/cupons`
 - **Contato**: `/api/v1/sobre/enviar-email`
 
 ## Tecnologias Utilizadas

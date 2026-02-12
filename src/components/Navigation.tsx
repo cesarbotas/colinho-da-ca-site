@@ -47,6 +47,7 @@ const Navigation = () => {
         { title: "Clientes", path: "/admin/clientes" },
         { title: "Pets", path: "/admin/pets" },
         { title: "Reservas", path: "/admin/reservas" },
+        { title: "Cupons", path: "/admin/cupons" },
       ],
     });
   }

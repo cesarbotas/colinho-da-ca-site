@@ -2,7 +2,6 @@ export interface PetData {
   id?: string | number;
   nome: string;
   porte: string;
-  raca: string;
   racaId?: number;
   racaNome?: string;
   idade: string;

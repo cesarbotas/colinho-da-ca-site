@@ -1,6 +1,6 @@
 import Navigation from "@/components/Navigation";
 import { Link } from "react-router-dom";
-import { Users, PawPrint, CalendarCheck } from "lucide-react";
+import { Users, PawPrint, CalendarCheck, Ticket } from "lucide-react";
 
 const Admin = () => {
   return (
@@ -14,7 +14,7 @@ const Admin = () => {
           Gerencie todos os cadastros do sistema
         </p>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-4 gap-8 max-w-6xl mx-auto">
           <Link
             to="/admin/clientes"
             className="group p-8 rounded-2xl bg-card border border-border hover:border-primary transition-all hover:shadow-lg hover:shadow-primary/10"
@@ -45,6 +45,17 @@ const Admin = () => {
             <h2 className="text-2xl font-bold mb-2">Reservas</h2>
             <p className="text-muted-foreground">
               Gerencie todas as reservas do sistema
+            </p>
+          </Link>
+
+          <Link
+            to="/admin/cupons"
+            className="group p-8 rounded-2xl bg-card border border-border hover:border-primary transition-all hover:shadow-lg hover:shadow-primary/10"
+          >
+            <Ticket className="w-12 h-12 text-primary mb-4 group-hover:scale-110 transition-transform" />
+            <h2 className="text-2xl font-bold mb-2">Cupons</h2>
+            <p className="text-muted-foreground">
+              Gerencie cupons de desconto
             </p>
           </Link>
         </div>
