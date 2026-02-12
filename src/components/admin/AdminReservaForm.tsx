@@ -2,13 +2,16 @@ import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Loader2, Check, ChevronsUpDown, CalendarIcon } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { ArrowLeft, Loader2, Check, ChevronsUpDown, CalendarIcon, X, Percent } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { cadastrarReserva, atualizarReserva, listarClientes, listarPets, type ReservaData, type ClienteData, type PetData } from "@/lib/api";
+import { cadastrarReserva, atualizarReserva, listarClientes, listarPets, cancelarReserva, aplicarDesconto, confirmarReserva, type ReservaData, type ClienteData, type PetData } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -26,6 +29,10 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
   const [openCliente, setOpenCliente] = useState(false);
   const [openDataInicio, setOpenDataInicio] = useState(false);
   const [openDataFim, setOpenDataFim] = useState(false);
+  const [openDesconto, setOpenDesconto] = useState(false);
+  const [openCancelar, setOpenCancelar] = useState(false);
+  const [openConfirmar, setOpenConfirmar] = useState(false);
+  const [valorDesconto, setValorDesconto] = useState("");
   const [formData, setFormData] = useState({
     clienteId: reserva?.clienteId || 0,
     petIds: reserva?.pets?.map(p => p.id) || [],
@@ -38,7 +45,7 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
 
   const calculos = useMemo(() => {
     if (!formData.dataInicial || !formData.dataFinal || formData.petIds.length === 0) {
-      return { quantidadeDiarias: 0, valorTotal: 0, valoresPorPet: [] };
+      return { quantidadeDiarias: 0, valorTotal: 0, valorDesconto: 0, valorFinal: 0, valoresPorPet: [] };
     }
 
     const inicio = new Date(formData.dataInicial + 'T12:00:00');
@@ -52,9 +59,17 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
     });
 
     const valorTotal = valoresPorPet.reduce((sum, p) => sum + p.valorPet, 0);
+    const desconto = parseFloat(valorDesconto) || reserva?.valorDesconto || 0;
+    const valorFinal = valorTotal - desconto;
 
-    return { quantidadeDiarias: diarias, valorTotal, valoresPorPet };
-  }, [formData.dataInicial, formData.dataFinal, formData.petIds, pets]);
+    return { quantidadeDiarias: diarias, valorTotal, valorDesconto: desconto, valorFinal, valoresPorPet };
+  }, [formData.dataInicial, formData.dataFinal, formData.petIds, pets, reserva?.valorDesconto, valorDesconto]);
+
+  useEffect(() => {
+    if (isEditing && reserva?.valorDesconto) {
+      setValorDesconto(reserva.valorDesconto.toString());
+    }
+  }, [isEditing, reserva?.valorDesconto]);
 
   useEffect(() => {
     const carregarClientes = async () => {
@@ -151,6 +166,69 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
       toast({
         title: "Erro",
         description: error instanceof Error ? error.message : "Erro ao salvar reserva.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelar = async () => {
+    if (!reserva?.id) return;
+    setLoading(true);
+    try {
+      await cancelarReserva(reserva.id);
+      toast({ title: "Sucesso!", description: "Reserva cancelada com sucesso." });
+      setOpenCancelar(false);
+      onVoltar();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao cancelar reserva.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmar = async () => {
+    if (!reserva?.id) return;
+    setLoading(true);
+    try {
+      await confirmarReserva(reserva.id);
+      toast({ title: "Sucesso!", description: "Reserva confirmada com sucesso." });
+      setOpenConfirmar(false);
+      onVoltar();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao confirmar reserva.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAplicarDesconto = async () => {
+    if (!reserva?.id || !valorDesconto) return;
+    const desconto = parseFloat(valorDesconto);
+    if (isNaN(desconto) || desconto < 0) {
+      toast({ title: "Erro", description: "Valor de desconto inválido.", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    try {
+      await aplicarDesconto(reserva.id, desconto);
+      toast({ title: "Sucesso!", description: "Desconto aplicado com sucesso." });
+      setOpenDesconto(false);
+      setValorDesconto("");
+      onVoltar();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao aplicar desconto.",
         variant: "destructive",
       });
     } finally {
@@ -320,6 +398,36 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isEditing ? "Salvar Alterações" : "Cadastrar Reserva"}
         </Button>
+        
+        {isEditing && reserva?.status === 1 && (
+          <Button 
+            variant="default" 
+            size="lg" 
+            type="button" 
+            onClick={() => setOpenConfirmar(true)} 
+            disabled={loading}
+            className="w-full"
+          >
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Check className="mr-2 h-4 w-4" />
+            Confirmar Reserva
+          </Button>
+        )}
+        
+        {isEditing && reserva?.status && reserva.status <= 4 && (
+          <Button 
+            variant="destructive" 
+            size="lg" 
+            type="button" 
+            onClick={() => setOpenCancelar(true)} 
+            disabled={loading}
+            className="w-full"
+          >
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <X className="mr-2 h-4 w-4" />
+            Cancelar Reserva
+          </Button>
+        )}
       </form>
 
       <div className="space-y-4 bg-card p-6 rounded-2xl border border-border shadow-lg">
@@ -353,13 +461,147 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
 
             <div className="border-t pt-3">
               <div className="flex justify-between items-center">
+                <span className="text-sm font-bold">Subtotal:</span>
+                <span className="text-lg font-bold">R$ {calculos.valorTotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center text-green-600">
+                <span className="text-sm font-bold">Desconto:</span>
+                <span className="text-lg font-bold">- R$ {calculos.valorDesconto.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center border-t pt-2">
                 <span className="text-sm font-bold">Total:</span>
-                <span className="text-2xl font-bold text-primary">R$ {calculos.valorTotal.toFixed(2)}</span>
+                <span className="text-2xl font-bold text-primary">R$ {calculos.valorFinal.toFixed(2)}</span>
               </div>
             </div>
+
+            {isEditing && reserva?.status === 1 && (
+              <Dialog open={openDesconto} onOpenChange={setOpenDesconto}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full">
+                    <Percent className="mr-2 h-4 w-4" />
+                    Conceder Desconto
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Conceder Desconto</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="desconto">Valor do Desconto (R$)</Label>
+                      <Input
+                        id="desconto"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max={calculos.valorTotal}
+                        value={valorDesconto}
+                        onChange={(e) => setValorDesconto(e.target.value)}
+                        placeholder="0,00"
+                      />
+                    </div>
+                    <div className="bg-muted p-3 rounded">
+                      <p className="text-sm text-muted-foreground">Resumo:</p>
+                      <div className="flex justify-between">
+                        <span>Subtotal:</span>
+                        <span>R$ {calculos.valorTotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-green-600">
+                        <span>Desconto:</span>
+                        <span>- R$ {(parseFloat(valorDesconto) || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-bold border-t pt-1">
+                        <span>Total:</span>
+                        <span>R$ {(calculos.valorTotal - (parseFloat(valorDesconto) || 0)).toFixed(2)}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={() => setOpenDesconto(false)} className="flex-1">
+                        Cancelar
+                      </Button>
+                      <Button onClick={handleAplicarDesconto} disabled={loading} className="flex-1">
+                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Aplicar
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+
+            {isEditing && reserva?.status && (
+              <div className="border-t pt-3">
+                <p className="text-xs font-semibold mb-2">Status:</p>
+                <div className="flex items-center gap-1">
+                  {reserva.status === 6 ? (
+                    <div className="flex items-center justify-center w-full">
+                      <div className="flex flex-col items-center">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center bg-red-500 text-white">
+                          <X className="h-3 w-3" />
+                        </div>
+                        <p className="text-xs mt-1 text-red-500 font-semibold">Cancelada</p>
+                      </div>
+                    </div>
+                  ) : (
+                    [1, 2, 3, 4, 5].map((step, index) => (
+                      <div key={step} className="flex items-center flex-1">
+                        <div className="flex flex-col items-center">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                            reserva.statusTimeline?.[step] ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                          }`}>
+                            {reserva.statusTimeline?.[step] && <Check className="h-3 w-3" />}
+                          </div>
+                        </div>
+                        {index < 4 && (
+                          <div className={`flex-1 h-0.5 ${
+                            reserva.statusTimeline?.[step + 1] ? 'bg-primary' : 'bg-muted'
+                          }`} />
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      <AlertDialog open={openConfirmar} onOpenChange={setOpenConfirmar}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Reserva</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja confirmar esta reserva?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmar} disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={openCancelar} onOpenChange={setOpenCancelar}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar Reserva</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja cancelar esta reserva? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Não</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelar} disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Sim, Cancelar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

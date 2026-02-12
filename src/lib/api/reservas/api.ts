@@ -88,3 +88,26 @@ export async function buscarComprovante(id: string | number): Promise<{ comprova
   if (!response.ok) throw new Error("Comprovante não encontrado");
   return response.json();
 }
+
+export async function cancelarReserva(id: string | number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/reservas/${id}/cancelar`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "Erro ao cancelar reserva" }));
+    throw new Error(error.message || "Erro ao cancelar reserva");
+  }
+}
+
+export async function aplicarDesconto(id: string | number, valorDesconto: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/reservas/${id}/desconto`, {
+    method: "POST",
+    headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ valorDesconto }),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "Erro ao aplicar desconto" }));
+    throw new Error(error.message || "Erro ao aplicar desconto");
+  }
+}
