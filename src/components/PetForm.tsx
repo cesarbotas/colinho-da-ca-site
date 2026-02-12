@@ -19,6 +19,7 @@ interface PetFormProps {
 const PetForm = ({ pet, onVoltar }: PetFormProps) => {
   const isEditing = !!pet?.id;
   const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
   const [clientes, setClientes] = useState<ClienteData[]>([]);
   const [racas, setRacas] = useState<RacaData[]>([]);
   const [open, setOpen] = useState(false);
@@ -36,38 +37,36 @@ const PetForm = ({ pet, onVoltar }: PetFormProps) => {
   });
 
   useEffect(() => {
-    const carregarClientes = async () => {
+    const carregarDados = async () => {
+      setLoadingData(true);
       try {
         const clienteId = authService.getClienteId();
-        const response = await listarClientes(1, 100, clienteId || undefined);
-        setClientes(response.data);
+        const [clientesResponse, racasData] = await Promise.all([
+          listarClientes(1, 100, clienteId || undefined),
+          listarRacas()
+        ]);
+        setClientes(clientesResponse.data);
+        setRacas(racasData);
         
         // Se for novo pet e tiver apenas 1 cliente, seleciona automaticamente
-        if (!isEditing && response.data.length === 1 && clienteId) {
+        if (!isEditing && clientesResponse.data.length === 1 && clienteId) {
           setFormData(prev => ({ 
             ...prev, 
-            clienteId: response.data[0].id as number,
-            tutor: response.data[0].nome 
+            clienteId: clientesResponse.data[0].id as number,
+            tutor: clientesResponse.data[0].nome 
           }));
         }
       } catch (error) {
         toast({
           title: "Erro",
-          description: "Erro ao carregar clientes.",
+          description: "Erro ao carregar dados.",
           variant: "destructive",
         });
+      } finally {
+        setLoadingData(false);
       }
     };
-    const carregarRacas = async () => {
-      try {
-        const data = await listarRacas();
-        setRacas(data);
-      } catch (error) {
-        console.error('Erro ao carregar raças:', error);
-      }
-    };
-    carregarClientes();
-    carregarRacas();
+    carregarDados();
   }, [isEditing]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -125,6 +124,11 @@ const PetForm = ({ pet, onVoltar }: PetFormProps) => {
         Voltar para a lista
       </Button>
 
+      {loadingData ? (
+        <div className="flex justify-center items-center py-24">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      ) : (
       <form onSubmit={handleSubmit} className="space-y-6 bg-card p-8 rounded-2xl border border-border shadow-lg">
         <h2 className="text-2xl font-semibold">
           {isEditing ? "Editar Pet" : "Novo Pet"}
@@ -228,6 +232,7 @@ const PetForm = ({ pet, onVoltar }: PetFormProps) => {
           {isEditing ? "Salvar Alterações" : "Cadastrar Pet"}
         </Button>
       </form>
+      )}
     </>
   );
 };

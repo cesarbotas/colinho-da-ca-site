@@ -22,13 +22,15 @@ interface ReservaFormProps {
 const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
   const isEditing = !!reserva?.id;
   const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
   const [clientes, setClientes] = useState<ClienteData[]>([]);
   const [pets, setPets] = useState<PetData[]>([]);
   const [openCliente, setOpenCliente] = useState(false);
   const [openDataInicio, setOpenDataInicio] = useState(false);
   const [openDataFim, setOpenDataFim] = useState(false);
-  const [codigoCupom, setCodigoCupom] = useState(reserva?.cupomAplicado || "");
-  const [valorDescontoLocal, setValorDescontoLocal] = useState(reserva?.valorDesconto || 0);
+  const [codigoCupom, setCodigoCupom] = useState("");
+  const [cupomId, setCupomId] = useState<number | null>(null);
+  const [valorDescontoLocal, setValorDescontoLocal] = useState(0);
   const [aplicandoCupom, setAplicandoCupom] = useState(false);
   const [formData, setFormData] = useState({
     clienteId: reserva?.clienteId || 0,
@@ -63,6 +65,7 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
 
   useEffect(() => {
     const carregarClientes = async () => {
+      setLoadingData(true);
       try {
         const clienteId = authService.getClienteId();
         const response = await listarClientes(1, 100, clienteId || undefined);
@@ -81,6 +84,8 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
           description: "Erro ao carregar clientes.",
           variant: "destructive",
         });
+      } finally {
+        setLoadingData(false);
       }
     };
     carregarClientes();
@@ -109,6 +114,9 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
 
   const handleClienteChange = (clienteId: number) => {
     setFormData((prev) => ({ ...prev, clienteId, petIds: [] }));
+    setValorDescontoLocal(0);
+    setCodigoCupom("");
+    setCupomId(null);
     setOpenCliente(false);
   };
 
@@ -123,10 +131,11 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
     });
     setValorDescontoLocal(0);
     setCodigoCupom("");
+    setCupomId(null);
   };
 
   const handleAplicarCupom = async () => {
-    if (!reserva?.id || !codigoCupom.trim()) {
+    if (!codigoCupom.trim()) {
       toast({ title: "Erro", description: "Informe o código do cupom.", variant: "destructive" });
       return;
     }
@@ -137,14 +146,15 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
     setAplicandoCupom(true);
     try {
       const resultado = await aplicarCupom(
-        reserva.id, 
+        0,
         codigoCupom, 
         calculos.valorTotal, 
         formData.petIds.length, 
         calculos.quantidadeDiarias
       );
       setValorDescontoLocal(resultado.valorDesconto);
-      toast({ title: "Sucesso!", description: "Cupom aplicado. Salve as alterações para confirmar." });
+      setCupomId(resultado.cupomId || null);
+      toast({ title: "Sucesso!", description: "Cupom aplicado com sucesso." });
     } catch (error) {
       toast({
         title: "Erro",
@@ -179,11 +189,20 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
 
     setLoading(true);
     try {
+      const usuarioId = authService.getUserData()?.id || 0;
       const payload = {
-        ...formData,
+        clienteId: formData.clienteId,
+        usuarioId,
+        dataInicial: formData.dataInicial,
+        dataFinal: formData.dataFinal,
         quantidadeDiarias: calculos.quantidadeDiarias,
         quantidadePets: formData.petIds.length,
         valorTotal: calculos.valorTotal,
+        valorDesconto: valorDescontoLocal,
+        valorFinal: calculos.valorFinal,
+        cupomId: cupomId,
+        observacoes: formData.observacoes,
+        petIds: formData.petIds,
       };
       
       if (isEditing) {
@@ -212,6 +231,11 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
         Voltar para a lista
       </Button>
 
+      {loadingData ? (
+        <div className="flex justify-center items-center py-24">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      ) : (
       <div className="grid md:grid-cols-3 gap-6">
         <form onSubmit={handleSubmit} className="md:col-span-2 space-y-6 bg-card p-8 rounded-2xl border border-border shadow-lg">
         <h2 className="text-2xl font-semibold">
@@ -384,7 +408,7 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
               </div>
             </div>
 
-            {isEditing && reserva?.status === 1 && (
+            {calculos.valorTotal > 0 && (
               <div className="border-t pt-3 space-y-2">
                 <Label htmlFor="cupom">Cupom de Desconto</Label>
                 <div className="flex gap-2">
@@ -401,14 +425,15 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
                     Aplicar
                   </Button>
                 </div>
-                {codigoCupom && (
-                  <p className="text-xs text-green-600">Cupom: {codigoCupom}</p>
+                {codigoCupom && valorDescontoLocal > 0 && (
+                  <p className="text-xs text-green-600">Cupom aplicado: {codigoCupom}</p>
                 )}
               </div>
             )}
           </div>
         </div>
       </div>
+      )}
     </>
   );
 };
