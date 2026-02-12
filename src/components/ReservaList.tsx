@@ -206,7 +206,7 @@ const ReservaList = ({ onNovaReserva, onEditarReserva }: ReservaListProps) => {
                               <p className="text-sm font-semibold mb-2">Pets:</p>
                               <ul className="list-disc list-inside space-y-1">
                                 {reserva.pets.map((pet) => (
-                                  <li key={pet.id} className="text-sm text-muted-foreground">{pet.nome}</li>
+                                  <li key={pet.id} className="text-sm text-muted-foreground">{pet.nome} - {pet.racaNome || "Sem raça"}</li>
                                 ))}
                               </ul>
                             </div>

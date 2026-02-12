@@ -12,6 +12,7 @@ export interface ReservaData {
   valorTotal?: number;
   valorDesconto?: number;
   valorFinal?: number;
+  cupomAplicado?: string;
   status?: number;
   comprovantePagamento?: string;
   dataPagamento?: string | null;
