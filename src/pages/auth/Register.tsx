@@ -33,13 +33,20 @@ const Register = () => {
     e.preventDefault();
     setLoading(true);
     try {
+      // Limpar dados da sessão anterior
+      authService.logout();
+      
       const payload = {
         ...formData,
         cpf: formData.cpf?.replace(/\D/g, ""),
         celular: formData.celular?.replace(/\D/g, ""),
       };
       await authService.register(payload);
-      toast({ title: "Sucesso!", description: "Usuário registrado com sucesso." });
+      
+      // Fazer login automático com os dados criados
+      await authService.login({ email: formData.email, senha: formData.senha });
+      
+      toast({ title: "Sucesso!", description: "Usuário registrado e logado com sucesso." });
       navigate("/");
     } catch (error) {
       toast({

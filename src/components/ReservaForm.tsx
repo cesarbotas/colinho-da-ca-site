@@ -13,6 +13,7 @@ import { cadastrarReserva, atualizarReserva, listarClientes, listarPets, authSer
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 interface ReservaFormProps {
   reserva?: ReservaData | null;
@@ -21,6 +22,7 @@ interface ReservaFormProps {
 
 const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
   const isEditing = !!reserva?.id;
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [clientes, setClientes] = useState<ClienteData[]>([]);
   const [pets, setPets] = useState<PetData[]>([]);
@@ -88,6 +90,18 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
         try {
           const response = await listarPets(1, 100, formData.clienteId);
           setPets(response.data);
+          
+          // Se for nova reserva e não tiver pets cadastrados, mostrar mensagem e redirecionar
+          if (!isEditing && response.data.length === 0) {
+            toast({
+              title: "Nenhum pet cadastrado",
+              description: "Você precisa cadastrar pelo menos um pet antes de fazer uma reserva.",
+              variant: "destructive",
+            });
+            setTimeout(() => {
+              navigate("/cadastro/pets?novo=true");
+            }, 2000);
+          }
         } catch (error) {
           toast({
             title: "Erro",
@@ -101,7 +115,7 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
       setPets([]);
       setFormData(prev => ({ ...prev, petIds: [] }));
     }
-  }, [formData.clienteId]);
+  }, [formData.clienteId, isEditing, navigate]);
 
   const handleClienteChange = (clienteId: number) => {
     setFormData((prev) => ({ ...prev, clienteId, petIds: [] }));
@@ -262,7 +276,17 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
             <Label>Pets (selecione até 3) *</Label>
             <div className="border rounded-lg p-4 space-y-2">
               {pets.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Este cliente não possui pets cadastrados.</p>
+                <div className="text-center py-4">
+                  <p className="text-sm text-muted-foreground mb-2">Este cliente não possui pets cadastrados.</p>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => navigate("/cadastro/pets?novo=true")}
+                  >
+                    Cadastrar Pet
+                  </Button>
+                </div>
               ) : (
                 pets.map((pet) => (
                   <div key={pet.id} className="flex items-center space-x-2">
