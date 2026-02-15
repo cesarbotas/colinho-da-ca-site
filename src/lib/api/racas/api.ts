@@ -4,7 +4,7 @@ import { getAuthHeaders } from "../auth";
 
 export async function listarRacas(): Promise<RacaData[]> {
   const response = await fetch(`${API_BASE_URL}/api/v1/racas`, {
-    headers: getAuthHeaders(),
+    headers: await getAuthHeaders(),
   });
   if (!response.ok) throw new Error("Erro ao buscar raças");
   return response.json();
