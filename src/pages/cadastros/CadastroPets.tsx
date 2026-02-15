@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { PawPrint, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,8 +11,15 @@ type View = "list" | "form";
 
 const CadastroPets = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [view, setView] = useState<View>("list");
   const [petEditando, setPetEditando] = useState<PetData | null>(null);
+
+  useEffect(() => {
+    if (searchParams.get("novo") === "true") {
+      setView("form");
+    }
+  }, [searchParams]);
 
   const handleNovo = () => {
     setPetEditando(null);

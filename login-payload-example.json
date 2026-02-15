@@ -1,0 +1,13 @@
+{
+  "email": "usuario@exemplo.com",
+  "senha": "minhasenha123",
+  "deviceInfo": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "platform": "MacIntel",
+    "language": "pt-BR",
+    "screenResolution": "1920x1080",
+    "timezone": "America/Sao_Paulo",
+    "clientIP": "192.168.1.100",
+    "timestamp": "2024-01-15T14:30:25.123Z"
+  }
+}
