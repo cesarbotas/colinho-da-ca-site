@@ -8,7 +8,7 @@ export async function listarClientes(page: number = 1, pageSize: number = 10, id
     url += `&Id=${id}`;
   }
   const response = await fetch(url, {
-    headers: getAuthHeaders(),
+    headers: await getAuthHeaders(),
   });
   if (!response.ok) throw new Error("Erro ao buscar clientes");
   return response.json();
@@ -17,7 +17,7 @@ export async function listarClientes(page: number = 1, pageSize: number = 10, id
 export async function cadastrarCliente(data: ClienteData): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/v1/clientes`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+    headers: { "Content-Type": "application/json", ...await getAuthHeaders() },
     body: JSON.stringify(data),
   });
   if (!response.ok) {
@@ -29,7 +29,7 @@ export async function cadastrarCliente(data: ClienteData): Promise<void> {
 export async function atualizarCliente(id: string | number, data: ClienteData): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/v1/clientes/${id}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+    headers: { "Content-Type": "application/json", ...await getAuthHeaders() },
     body: JSON.stringify(data),
   });
   if (!response.ok) {
@@ -41,7 +41,7 @@ export async function atualizarCliente(id: string | number, data: ClienteData): 
 export async function excluirCliente(id: string | number): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/v1/clientes/${id}`, {
     method: "DELETE",
-    headers: getAuthHeaders(),
+    headers: await getAuthHeaders(),
   });
   if (!response.ok) throw new Error("Erro ao excluir cliente");
 }

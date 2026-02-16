@@ -7,7 +7,7 @@ export async function listarPets(page: number = 1, pageSize: number = 10, client
   if (clienteId) {
     url += `&ClienteId=${clienteId}`;
   }
-  const response = await fetch(url, { headers: getAuthHeaders() });
+  const response = await fetch(url, { headers: await getAuthHeaders() });
   if (!response.ok) throw new Error("Erro ao buscar pets");
   return response.json();
 }
@@ -15,7 +15,7 @@ export async function listarPets(page: number = 1, pageSize: number = 10, client
 export async function cadastrarPet(data: PetData): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/v1/pets`, {
     method: "POST",
-    headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+    headers: { ...await getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
   if (!response.ok) {
@@ -27,7 +27,7 @@ export async function cadastrarPet(data: PetData): Promise<void> {
 export async function atualizarPet(id: string | number, data: PetData): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/v1/pets/${id}`, {
     method: "PUT",
-    headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+    headers: { ...await getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
   if (!response.ok) {
@@ -39,7 +39,7 @@ export async function atualizarPet(id: string | number, data: PetData): Promise<
 export async function excluirPet(id: string | number): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/v1/pets/${id}`, {
     method: "DELETE",
-    headers: getAuthHeaders(),
+    headers: await getAuthHeaders(),
   });
   if (!response.ok) throw new Error("Erro ao excluir pet");
 }
