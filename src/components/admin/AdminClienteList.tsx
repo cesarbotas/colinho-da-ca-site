@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, ChevronLeft, ChevronRight, Search, Filter, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { listarClientes, excluirCliente, type ClienteData } from "@/lib/api";
 
@@ -20,11 +22,29 @@ const AdminClienteList = ({ onNovoCliente, onEditarCliente }: AdminClienteListPr
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
+  const [filtroNome, setFiltroNome] = useState("");
+  const [filtroEmail, setFiltroEmail] = useState("");
+  const [filtroCpf, setFiltroCpf] = useState("");
+  const [filtrosAplicados, setFiltrosAplicados] = useState({ nome: "", email: "", cpf: "" });
 
   const carregarClientes = async () => {
     setLoading(true);
     try {
-      const response = await listarClientes(page, pageSize);
+      const params = new URLSearchParams();
+      
+      if (filtrosAplicados.nome.trim()) {
+        params.append('Nome', filtrosAplicados.nome.trim());
+      }
+      
+      if (filtrosAplicados.email.trim()) {
+        params.append('Email', filtrosAplicados.email.trim());
+      }
+      
+      if (filtrosAplicados.cpf.trim()) {
+        params.append('Cpf', filtrosAplicados.cpf.trim());
+      }
+      
+      const response = await listarClientes(page, pageSize, params.toString());
       setClientes(response.data);
       setTotal(response.total);
     } catch (error) {
@@ -40,7 +60,7 @@ const AdminClienteList = ({ onNovoCliente, onEditarCliente }: AdminClienteListPr
 
   useEffect(() => {
     carregarClientes();
-  }, [page, pageSize]);
+  }, [page, pageSize, filtrosAplicados]);
 
   const handleExcluir = async () => {
     if (deleteId === null) return;
@@ -61,10 +81,84 @@ const AdminClienteList = ({ onNovoCliente, onEditarCliente }: AdminClienteListPr
     }
   };
 
+  const aplicarFiltros = () => {
+    setFiltrosAplicados({ nome: filtroNome, email: filtroEmail, cpf: filtroCpf });
+    setPage(1);
+  };
+
+  const limparFiltros = () => {
+    setFiltroNome("");
+    setFiltroEmail("");
+    setFiltroCpf("");
+    setFiltrosAplicados({ nome: "", email: "", cpf: "" });
+    setPage(1);
+  };
+
   const totalPages = Math.ceil(total / pageSize);
 
   return (
     <>
+      {/* Filtros */}
+      <div className="bg-card rounded-2xl border border-border shadow-lg p-6 mb-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Filter className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-semibold">Filtros</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="filtroNome">Nome do Cliente</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="filtroNome"
+                placeholder="Buscar por nome..."
+                value={filtroNome}
+                onChange={(e) => setFiltroNome(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="filtroEmail">Email</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="filtroEmail"
+                placeholder="Buscar por email..."
+                value={filtroEmail}
+                onChange={(e) => setFiltroEmail(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="filtroCpf">CPF</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="filtroCpf"
+                placeholder="Buscar por CPF..."
+                value={filtroCpf}
+                onChange={(e) => setFiltroCpf(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+        </div>
+        <div className="mt-4 flex gap-2">
+          <Button onClick={aplicarFiltros}>
+            <Search className="mr-2 h-4 w-4" />
+            Filtrar
+          </Button>
+          {(filtroNome || filtroEmail || filtroCpf) && (
+            <Button variant="outline" onClick={limparFiltros}>
+              <X className="mr-2 h-4 w-4" />
+              Limpar
+            </Button>
+          )}
+        </div>
+      </div>
+
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
           <p className="text-muted-foreground">
