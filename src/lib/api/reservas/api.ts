@@ -2,10 +2,13 @@ import { API_BASE_URL, PaginatedResponse } from "../config";
 import { ReservaData } from "./types";
 import { getAuthHeaders } from "../auth";
 
-export async function listarReservas(page: number = 1, pageSize: number = 10, clienteId?: number): Promise<PaginatedResponse<ReservaData>> {
+export async function listarReservas(page: number = 1, pageSize: number = 10, clienteId?: number, filtrosAdicionais?: string): Promise<PaginatedResponse<ReservaData>> {
   let url = `${API_BASE_URL}/api/v1/reservas?Paginacao.NumeroPagina=${page}&Paginacao.QuantidadeRegistros=${pageSize}`;
   if (clienteId) {
     url += `&ClienteId=${clienteId}`;
+  }
+  if (filtrosAdicionais) {
+    url += `&${filtrosAdicionais}`;
   }
   const response = await fetch(url, { headers: await getAuthHeaders() });
   if (!response.ok) throw new Error("Erro ao buscar reservas");

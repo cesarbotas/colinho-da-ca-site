@@ -3,7 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Loader2, ChevronDown, ChevronRight, Upload, Check } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Plus, Pencil, Trash2, Loader2, ChevronDown, ChevronRight, Upload, Check, Search, Filter, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { listarReservas, excluirReserva, enviarComprovante, authService, type ReservaData } from "@/lib/api";
 import { format } from "date-fns";
@@ -23,12 +25,29 @@ const ReservaList = ({ onNovaReserva, onEditarReserva }: ReservaListProps) => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
+  const [filtroDataInicial, setFiltroDataInicial] = useState("");
+  const [filtroDataFinal, setFiltroDataFinal] = useState("");
+  const [filtrosAplicados, setFiltrosAplicados] = useState({ dataInicial: "", dataFinal: "" });
 
   const carregarReservas = async () => {
     setLoading(true);
     try {
       const clienteId = authService.getClienteId();
-      const response = await listarReservas(page, pageSize, clienteId || undefined);
+      const params = new URLSearchParams();
+      
+      if (clienteId) {
+        params.append('ClienteId', clienteId.toString());
+      }
+      
+      if (filtrosAplicados.dataInicial) {
+        params.append('DataInicial', filtrosAplicados.dataInicial);
+      }
+      
+      if (filtrosAplicados.dataFinal) {
+        params.append('DataFinal', filtrosAplicados.dataFinal);
+      }
+      
+      const response = await listarReservas(page, pageSize, undefined, params.toString());
       setReservas(response.data || []);
       setTotal(response.total || 0);
     } catch (error) {
@@ -46,7 +65,19 @@ const ReservaList = ({ onNovaReserva, onEditarReserva }: ReservaListProps) => {
 
   useEffect(() => {
     carregarReservas();
-  }, [page, pageSize]);
+  }, [page, pageSize, filtrosAplicados]);
+
+  const aplicarFiltros = () => {
+    setFiltrosAplicados({ dataInicial: filtroDataInicial, dataFinal: filtroDataFinal });
+    setPage(1);
+  };
+
+  const limparFiltros = () => {
+    setFiltroDataInicial("");
+    setFiltroDataFinal("");
+    setFiltrosAplicados({ dataInicial: "", dataFinal: "" });
+    setPage(1);
+  };
 
   const handleExcluir = async () => {
     if (deleteId === null) return;
@@ -91,6 +122,46 @@ const ReservaList = ({ onNovaReserva, onEditarReserva }: ReservaListProps) => {
 
   return (
     <>
+      {/* Filtros */}
+      <div className="bg-card rounded-2xl border border-border shadow-lg p-6 mb-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Filter className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-semibold">Filtros</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="filtroDataInicial">Data Inicial</Label>
+            <Input
+              id="filtroDataInicial"
+              type="date"
+              value={filtroDataInicial}
+              onChange={(e) => setFiltroDataInicial(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="filtroDataFinal">Data Final</Label>
+            <Input
+              id="filtroDataFinal"
+              type="date"
+              value={filtroDataFinal}
+              onChange={(e) => setFiltroDataFinal(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="mt-4 flex gap-2">
+          <Button onClick={aplicarFiltros}>
+            <Search className="mr-2 h-4 w-4" />
+            Filtrar
+          </Button>
+          {(filtroDataInicial || filtroDataFinal) && (
+            <Button variant="outline" onClick={limparFiltros}>
+              <X className="mr-2 h-4 w-4" />
+              Limpar
+            </Button>
+          )}
+        </div>
+      </div>
+
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
           <p className="text-muted-foreground">
@@ -142,13 +213,33 @@ const ReservaList = ({ onNovaReserva, onEditarReserva }: ReservaListProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {reservas.map((reserva) => (
+              {reservas.map((reserva) => {
+                const getRowClassName = () => {
+                  if (reserva.status === 5) return "bg-green-50 hover:bg-green-100"; // Finalizada - verde claro
+                  if (reserva.status === 6) return "bg-red-50 hover:bg-red-100"; // Cancelada - vermelho claro
+                  if (reserva.status === 2 || reserva.status === 3) return "bg-yellow-50 hover:bg-yellow-100"; // Pendência pagamento - amarelo
+                  return "hover:bg-muted/50"; // Padrão
+                };
+                
+                const getStatusIndicator = () => {
+                  if (reserva.status === 5) return <span className="text-green-600 text-xs font-medium">✓ Finalizada</span>;
+                  if (reserva.status === 6) return <span className="text-red-600 text-xs font-medium">✗ Cancelada</span>;
+                  if (reserva.status === 2 || reserva.status === 3) return <span className="text-yellow-600 text-xs font-medium">⚠ Pendente Pagamento</span>;
+                  return null;
+                };
+                
+                return (
                 <Fragment key={reserva.id}>
-                  <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => setExpandedId(expandedId === reserva.id ? null : reserva.id)}>
+                  <TableRow className={`cursor-pointer ${getRowClassName()}`} onClick={() => setExpandedId(expandedId === reserva.id ? null : reserva.id)}>
                     <TableCell>
                       {expandedId === reserva.id ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                     </TableCell>
-                    <TableCell className="font-medium">{reserva.clienteNome}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex flex-col">
+                        <span>{reserva.clienteNome}</span>
+                        {getStatusIndicator()}
+                      </div>
+                    </TableCell>
                     <TableCell>{reserva.quantidadePets || reserva.pets?.length || 0}</TableCell>
                     <TableCell>{reserva.quantidadeDiarias || 0}</TableCell>
                     <TableCell>{reserva.dataInicial ? format(new Date(reserva.dataInicial.split('T')[0] + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR }) : "—"}</TableCell>
@@ -262,7 +353,7 @@ const ReservaList = ({ onNovaReserva, onEditarReserva }: ReservaListProps) => {
                     </TableRow>
                   )}
                 </Fragment>
-              ))}
+              );})}
             </TableBody>
           </Table>
         </div>
