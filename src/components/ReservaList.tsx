@@ -213,13 +213,33 @@ const ReservaList = ({ onNovaReserva, onEditarReserva }: ReservaListProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {reservas.map((reserva) => (
+              {reservas.map((reserva) => {
+                const getRowClassName = () => {
+                  if (reserva.status === 5) return "bg-green-50 hover:bg-green-100"; // Finalizada - verde claro
+                  if (reserva.status === 6) return "bg-red-50 hover:bg-red-100"; // Cancelada - vermelho claro
+                  if (reserva.status === 2 || reserva.status === 3) return "bg-yellow-50 hover:bg-yellow-100"; // Pendência pagamento - amarelo
+                  return "hover:bg-muted/50"; // Padrão
+                };
+                
+                const getStatusIndicator = () => {
+                  if (reserva.status === 5) return <span className="text-green-600 text-xs font-medium">✓ Finalizada</span>;
+                  if (reserva.status === 6) return <span className="text-red-600 text-xs font-medium">✗ Cancelada</span>;
+                  if (reserva.status === 2 || reserva.status === 3) return <span className="text-yellow-600 text-xs font-medium">⚠ Pendente Pagamento</span>;
+                  return null;
+                };
+                
+                return (
                 <Fragment key={reserva.id}>
-                  <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => setExpandedId(expandedId === reserva.id ? null : reserva.id)}>
+                  <TableRow className={`cursor-pointer ${getRowClassName()}`} onClick={() => setExpandedId(expandedId === reserva.id ? null : reserva.id)}>
                     <TableCell>
                       {expandedId === reserva.id ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                     </TableCell>
-                    <TableCell className="font-medium">{reserva.clienteNome}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex flex-col">
+                        <span>{reserva.clienteNome}</span>
+                        {getStatusIndicator()}
+                      </div>
+                    </TableCell>
                     <TableCell>{reserva.quantidadePets || reserva.pets?.length || 0}</TableCell>
                     <TableCell>{reserva.quantidadeDiarias || 0}</TableCell>
                     <TableCell>{reserva.dataInicial ? format(new Date(reserva.dataInicial.split('T')[0] + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR }) : "—"}</TableCell>
@@ -333,7 +353,7 @@ const ReservaList = ({ onNovaReserva, onEditarReserva }: ReservaListProps) => {
                     </TableRow>
                   )}
                 </Fragment>
-              ))}
+              );})}
             </TableBody>
           </Table>
         </div>
