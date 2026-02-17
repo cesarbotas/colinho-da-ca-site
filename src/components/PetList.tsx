@@ -3,7 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Plus, Pencil, Trash2, Loader2, Search, Filter, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { listarPets, excluirPet, getPorteLabel, authService, type PetData } from "@/lib/api";
 
@@ -20,12 +22,24 @@ const PetList = ({ onNovoPet, onEditarPet }: PetListProps) => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
+  const [filtroNome, setFiltroNome] = useState("");
+  const [filtrosAplicados, setFiltrosAplicados] = useState({ nome: "" });
 
   const carregarPets = async () => {
     setLoading(true);
     try {
       const clienteId = authService.getClienteId();
-      const response = await listarPets(page, pageSize, clienteId || undefined);
+      const params = new URLSearchParams();
+      
+      if (clienteId) {
+        params.append('ClienteId', clienteId.toString());
+      }
+      
+      if (filtrosAplicados.nome.trim()) {
+        params.append('Nome', filtrosAplicados.nome.trim());
+      }
+      
+      const response = await listarPets(page, pageSize, params.toString());
       setPets(response.data);
       setTotal(response.total);
     } catch (error) {
@@ -41,7 +55,18 @@ const PetList = ({ onNovoPet, onEditarPet }: PetListProps) => {
 
   useEffect(() => {
     carregarPets();
-  }, [page, pageSize]);
+  }, [page, pageSize, filtrosAplicados]);
+
+  const aplicarFiltros = () => {
+    setFiltrosAplicados({ nome: filtroNome });
+    setPage(1);
+  };
+
+  const limparFiltros = () => {
+    setFiltroNome("");
+    setFiltrosAplicados({ nome: "" });
+    setPage(1);
+  };
 
   const handleExcluir = async () => {
     if (deleteId === null) return;
@@ -64,6 +89,41 @@ const PetList = ({ onNovoPet, onEditarPet }: PetListProps) => {
 
   return (
     <>
+      {/* Filtros */}
+      <div className="bg-card rounded-2xl border border-border shadow-lg p-6 mb-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Filter className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-semibold">Filtros</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="filtroNome">Nome do Pet</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="filtroNome"
+                placeholder="Buscar por nome do pet..."
+                value={filtroNome}
+                onChange={(e) => setFiltroNome(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+        </div>
+        <div className="mt-4 flex gap-2">
+          <Button onClick={aplicarFiltros}>
+            <Search className="mr-2 h-4 w-4" />
+            Filtrar
+          </Button>
+          {filtroNome && (
+            <Button variant="outline" onClick={limparFiltros}>
+              <X className="mr-2 h-4 w-4" />
+              Limpar
+            </Button>
+          )}
+        </div>
+      </div>
+
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
           <p className="text-muted-foreground">

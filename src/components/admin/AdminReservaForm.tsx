@@ -91,7 +91,9 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
     if (formData.clienteId) {
       const carregarPets = async () => {
         try {
-          const response = await listarPets(1, 100, formData.clienteId);
+          const params = new URLSearchParams();
+          params.append('ClienteId', formData.clienteId.toString());
+          const response = await listarPets(1, 100, params.toString());
           setPets(response.data);
         } catch (error) {
           toast({
@@ -309,6 +311,17 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
                   selected={formData.dataInicial ? new Date(formData.dataInicial + 'T12:00:00') : undefined}
                   onSelect={(date) => {
                     const newDataInicial = date ? format(date, "yyyy-MM-dd") : "";
+                    const hoje = format(new Date(), "yyyy-MM-dd");
+                    
+                    if (newDataInicial && newDataInicial < hoje) {
+                      toast({
+                        title: "Data inválida",
+                        description: "A data inicial não pode ser anterior a hoje.",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    
                     if (formData.dataFinal && newDataInicial > formData.dataFinal) {
                       toast({
                         title: "Data inválida",
@@ -320,6 +333,7 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
                     setFormData((prev) => ({ ...prev, dataInicial: newDataInicial }));
                     setOpenDataInicio(false);
                   }}
+                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                   locale={ptBR}
                 />
               </PopoverContent>
@@ -340,6 +354,17 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
                   selected={formData.dataFinal ? new Date(formData.dataFinal + 'T12:00:00') : undefined}
                   onSelect={(date) => {
                     const newDataFinal = date ? format(date, "yyyy-MM-dd") : "";
+                    const hoje = format(new Date(), "yyyy-MM-dd");
+                    
+                    if (newDataFinal && newDataFinal < hoje) {
+                      toast({
+                        title: "Data inválida",
+                        description: "A data final não pode ser anterior a hoje.",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    
                     if (formData.dataInicial && newDataFinal < formData.dataInicial) {
                       toast({
                         title: "Data inválida",
@@ -351,6 +376,7 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
                     setFormData((prev) => ({ ...prev, dataFinal: newDataFinal }));
                     setOpenDataFim(false);
                   }}
+                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                   locale={ptBR}
                 />
               </PopoverContent>
