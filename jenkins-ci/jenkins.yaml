@@ -1,0 +1,41 @@
+jenkins:
+  systemMessage: "Jenkins CI/CD - Colinho da Cá Frontend"
+  numExecutors: 2
+  mode: NORMAL
+  
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          password: "admin123"
+          
+  authorizationStrategy:
+    globalMatrix:
+      permissions:
+        - "Overall/Administer:admin"
+        - "Overall/Read:authenticated"
+
+  nodes:
+    - permanent:
+        name: "docker-agent-frontend"
+        remoteFS: "/workspace"
+        launcher:
+          inbound:
+            webSocket: true
+
+tool:
+  nodejs:
+    installations:
+      - name: "NodeJS 18"
+        properties:
+          - installSource:
+              installers:
+                - nodeJSInstaller:
+                    id: "18.19.0"
+                    npmPackagesRefreshHours: 72
+
+unclassified:
+  location:
+    url: "http://localhost:8091/"
+    adminAddress: "admin@colinhodaca.com"
