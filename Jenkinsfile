@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'node:18-alpine'
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
     
     triggers {
         githubPush()
@@ -16,24 +21,6 @@ pipeline {
             steps {
                 checkout scm
                 echo 'Código fonte baixado ✅'
-            }
-        }
-        
-        stage('Setup Node.js') {
-            steps {
-                script {
-                    try {
-                        sh 'node --version && npm --version'
-                        echo 'Node.js já instalado ✅'
-                    } catch (Exception e) {
-                        echo '⚠️ Node.js não encontrado - instalando...'
-                        sh '''
-                        curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-                        sudo apt-get install -y nodejs
-                        '''
-                        echo 'Node.js instalado ✅'
-                    }
-                }
             }
         }
         
@@ -72,6 +59,7 @@ pipeline {
         }
 
         stage('Docker Build') {
+            agent any
             steps {
                 sh """
                 docker build -t ${IMAGE_NAME}:${VERSION} .
@@ -82,6 +70,7 @@ pipeline {
         }
         
         stage('Docker Push') {
+            agent any
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub',
