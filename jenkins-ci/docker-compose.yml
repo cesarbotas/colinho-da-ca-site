@@ -2,45 +2,56 @@ version: '3.8'
 
 services:
   jenkins:
-    image: jenkins/jenkins:lts
-    container_name: jenkins-frontend
+    build:
+      context: .
+      dockerfile: Dockerfile.jenkins
+    container_name: jenkins
     restart: unless-stopped
+    user: root
     ports:
-      - "8092:8080"
-      - "50002:50000"
+      - "8090:8080"
+      - "50000:50000"
     volumes:
       - jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - JENKINS_OPTS=--httpPort=8080
-      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+      - DOCKER_HOST=unix:///var/run/docker.sock
     networks:
-      - jenkins-network
+      - ci-network
 
-  jenkins-agent:
+  docker-agent:
     build:
       context: .
       dockerfile: Dockerfile.agent
-    container_name: jenkins-agent-frontend
-    restart: unless-stopped
+    container_name: jenkins-agent
+    privileged: true
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - jenkins_workspace:/workspace
-    environment:
-      - JENKINS_URL=http://jenkins:8080
-      - JENKINS_AGENT_NAME=docker-agent-frontend
-      - JENKINS_AGENT_WORKDIR=/workspace
+      - jenkins_home:/var/jenkins_home
+    networks:
+      - ci-network
     depends_on:
       - jenkins
+
+  postgres:
+    image: postgres:16
+    container_name: postgres-ci
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: colinhodaca
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     networks:
-      - jenkins-network
+      - ci-network
 
 volumes:
   jenkins_home:
-    driver: local
-  jenkins_workspace:
-    driver: local
+  postgres_data:
 
 networks:
-  jenkins-network:
+  ci-network:
     driver: bridge
