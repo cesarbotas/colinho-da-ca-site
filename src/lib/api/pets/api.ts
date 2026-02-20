@@ -2,10 +2,10 @@ import { API_BASE_URL, PaginatedResponse } from "../config";
 import { PetData } from "./types";
 import { getAuthHeaders } from "../auth";
 
-export async function listarPets(page: number = 1, pageSize: number = 10, filtrosAdicionais?: string): Promise<PaginatedResponse<PetData>> {
+export async function listarPets(page: number = 1, pageSize: number = 10, clienteId?: number): Promise<PaginatedResponse<PetData>> {
   let url = `${API_BASE_URL}/api/v1/pets?Paginacao.NumeroPagina=${page}&Paginacao.QuantidadeRegistros=${pageSize}`;
-  if (filtrosAdicionais) {
-    url += `&${filtrosAdicionais}`;
+  if (clienteId) {
+    url += `&ClienteId=${clienteId}`;
   }
   const response = await fetch(url, { headers: await getAuthHeaders() });
   if (!response.ok) throw new Error("Erro ao buscar pets");

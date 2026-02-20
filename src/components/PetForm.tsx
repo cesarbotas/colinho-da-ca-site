@@ -42,13 +42,12 @@ const PetForm = ({ pet, onVoltar }: PetFormProps) => {
       try {
         const clienteId = authService.getClienteId();
         const [clientesResponse, racasData] = await Promise.all([
-          listarClientes(1, 100, clienteId || undefined),
+          listarClientes(1, 100, clienteId ? clienteId : undefined),
           listarRacas()
         ]);
         setClientes(clientesResponse.data);
         setRacas(racasData);
         
-        // Se for novo pet e tiver apenas 1 cliente, seleciona automaticamente
         if (!isEditing && clientesResponse.data.length === 1 && clienteId) {
           setFormData(prev => ({ 
             ...prev, 

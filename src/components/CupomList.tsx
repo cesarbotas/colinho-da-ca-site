@@ -18,6 +18,7 @@ const tipoLabels: Record<number, string> = {
   2: "% Pet Mín",
   3: "% Pet Diárias",
   4: "Fixo Mín",
+  5: "Último Pet",
 };
 
 const CupomList = ({ onNovoCupom, onEditarCupom }: CupomListProps) => {

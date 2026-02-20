@@ -2,10 +2,10 @@ import { API_BASE_URL, PaginatedResponse } from "../config";
 import { ClienteData } from "./types";
 import { getAuthHeaders } from "../auth";
 
-export async function listarClientes(page: number = 1, pageSize: number = 10, filtrosAdicionais?: string): Promise<PaginatedResponse<ClienteData>> {
+export async function listarClientes(page: number = 1, pageSize: number = 10, clienteId?: number): Promise<PaginatedResponse<ClienteData>> {
   let url = `${API_BASE_URL}/api/v1/clientes?Paginacao.NumeroPagina=${page}&Paginacao.QuantidadeRegistros=${pageSize}`;
-  if (filtrosAdicionais) {
-    url += `&${filtrosAdicionais}`;
+  if (clienteId) {
+    url += `&ClienteId=${clienteId}`;
   }
   const response = await fetch(url, {
     headers: await getAuthHeaders(),

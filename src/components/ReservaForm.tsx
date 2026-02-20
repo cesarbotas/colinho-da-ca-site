@@ -70,11 +70,7 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
       setLoadingData(true);
       try {
         const clienteId = authService.getClienteId();
-        const params = new URLSearchParams();
-        if (clienteId) {
-          params.append('ClienteId', clienteId.toString());
-        }
-        const response = await listarClientes(1, 100, params.toString());
+        const response = await listarClientes(1, 100, clienteId ? clienteId : undefined);
         setClientes(response.data);
         
         // Se for nova reserva e tiver apenas 1 cliente, seleciona automaticamente
@@ -101,9 +97,7 @@ const ReservaForm = ({ reserva, onVoltar }: ReservaFormProps) => {
     if (formData.clienteId) {
       const carregarPets = async () => {
         try {
-          const params = new URLSearchParams();
-          params.append('ClienteId', formData.clienteId.toString());
-          const response = await listarPets(1, 100, params.toString());
+          const response = await listarPets(1, 100, formData.clienteId);
           setPets(response.data);
           
           // Se for nova reserva e não tiver pets cadastrados, mostrar mensagem e redirecionar

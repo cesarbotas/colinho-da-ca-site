@@ -29,17 +29,7 @@ const PetList = ({ onNovoPet, onEditarPet }: PetListProps) => {
     setLoading(true);
     try {
       const clienteId = authService.getClienteId();
-      const params = new URLSearchParams();
-      
-      if (clienteId) {
-        params.append('ClienteId', clienteId.toString());
-      }
-      
-      if (filtrosAplicados.nome.trim()) {
-        params.append('Nome', filtrosAplicados.nome.trim());
-      }
-      
-      const response = await listarPets(page, pageSize, params.toString());
+      const response = await listarPets(page, pageSize, clienteId || undefined);
       setPets(response.data);
       setTotal(response.total);
     } catch (error) {
@@ -55,7 +45,7 @@ const PetList = ({ onNovoPet, onEditarPet }: PetListProps) => {
 
   useEffect(() => {
     carregarPets();
-  }, [page, pageSize, filtrosAplicados]);
+  }, [page, pageSize]);
 
   const aplicarFiltros = () => {
     setFiltrosAplicados({ nome: filtroNome });
