@@ -62,9 +62,27 @@ src/
 - **Enum**: PortePet (P=Pequeno, M=Médio, G=Grande)
 
 ### 4. Reservas
-- **Campos**: id, clienteId, clienteNome, dataInicial, dataFinal, quantidadeDiarias, quantidadePets, valorTotal, valorDesconto, valorFinal, cupomId, observacoes, petIds, pets
-- **Endpoints**: GET, POST, PUT, DELETE `/api/v1/reservas`
-- **Recursos**: Seleção de cliente, múltiplos pets (até 3), date pickers, linhas expansíveis
+- **Campos**: id, clienteId, clienteNome, dataInicial, dataFinal, quantidadeDiarias, quantidadePets, valorTotal, valorDesconto, observacoes, petIds, pets, status, statusTimeline, comprovantePagamento
+- **Endpoints**: 
+  - GET, POST, PUT, DELETE `/api/v1/reservas`
+  - POST `/api/v1/reservas/{id}/confirmar` - Confirmar reserva
+  - POST `/api/v1/reservas/{id}/aprovar-pagamento` - Aprovar pagamento
+  - POST `/api/v1/reservas/{id}/cancelar` - Cancelar reserva
+  - POST `/api/v1/reservas/{id}/desconto` - Aplicar desconto
+  - POST `/api/v1/reservas/{id}/comprovante` - Enviar comprovante
+  - GET `/api/v1/reservas/{id}/comprovante` - Buscar comprovante
+- **Status**:
+  - 1: Criada
+  - 2: Confirmada
+  - 3: Pagamento Pendente
+  - 4: Pagamento Aprovado
+  - 5: Finalizada
+  - 6: Cancelada (exibida em vermelho)
+- **Timeline**: Exibe progresso visual dos status (1-5), ou status cancelado (6) em vermelho
+- **Desconto**: Admin pode conceder desconto no status "Criada" (1)
+- **Cancelamento**: Disponível nos status "Criada" (1) e "Pagamento Pendente" (3)
+- **Recursos**: Seleção de cliente, múltiplos pets (até 3), date pickers, linhas expansíveis, resumo com subtotal/desconto/total
+- **Restrições**: Botões de editar/excluir ocultos para status "Finalizada" (5) e "Cancelada" (6)
 - **Paginação**: Sim
 
 ### 5. Cupons
