@@ -190,12 +190,13 @@ Content-Type: application/json
 ## Pets
 
 ### 1. Listar Pets (Paginado)
-**Endpoint:** `GET /pets?Paginacao.NumeroPagina={page}&Paginacao.QuantidadeRegistros={pageSize}&ClienteId={clienteId}`
+**Endpoint:** `GET /pets?Paginacao.NumeroPagina={page}&Paginacao.QuantidadeRegistros={pageSize}&ClienteId={clienteId}&Id={petId}`
 
 **Headers:** Authorization required
 
 **Query Parameters:**
 - `ClienteId` (opcional): Filtrar por cliente
+- `Id` (opcional): Filtrar por pet específico
 
 **Response (200):**
 ```json

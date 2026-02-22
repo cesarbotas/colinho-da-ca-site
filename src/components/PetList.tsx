@@ -29,7 +29,7 @@ const PetList = ({ onNovoPet, onEditarPet }: PetListProps) => {
     setLoading(true);
     try {
       const clienteId = authService.getClienteId();
-      const response = await listarPets(page, pageSize, clienteId || undefined);
+      const response = await listarPets(page, pageSize, clienteId);
       setPets(response.data);
       setTotal(response.total);
     } catch (error) {

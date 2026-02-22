@@ -42,17 +42,23 @@ const PetForm = ({ pet, onVoltar }: PetFormProps) => {
       try {
         const clienteId = authService.getClienteId();
         const [clientesResponse, racasData] = await Promise.all([
-          listarClientes(1, 100, clienteId ? clienteId : undefined),
+          listarClientes(1, 100),
           listarRacas()
         ]);
-        setClientes(clientesResponse.data);
+        
+        let clientesFiltrados = clientesResponse.data;
+        if (clienteId) {
+          clientesFiltrados = clientesResponse.data.filter(c => c.id === clienteId);
+        }
+        
+        setClientes(clientesFiltrados);
         setRacas(racasData);
         
-        if (!isEditing && clientesResponse.data.length === 1 && clienteId) {
+        if (!isEditing && clientesFiltrados.length === 1 && clienteId) {
           setFormData(prev => ({ 
             ...prev, 
-            clienteId: clientesResponse.data[0].id as number,
-            tutor: clientesResponse.data[0].nome 
+            clienteId: clientesFiltrados[0].id as number,
+            tutor: clientesFiltrados[0].nome 
           }));
         }
       } catch (error) {

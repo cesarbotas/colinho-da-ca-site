@@ -91,9 +91,7 @@ const AdminReservaForm = ({ reserva, onVoltar }: AdminReservaFormProps) => {
     if (formData.clienteId) {
       const carregarPets = async () => {
         try {
-          const params = new URLSearchParams();
-          params.append('ClienteId', formData.clienteId.toString());
-          const response = await listarPets(1, 100, params.toString());
+          const response = await listarPets(1, 100, formData.clienteId);
           setPets(response.data);
         } catch (error) {
           toast({
