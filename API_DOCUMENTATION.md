@@ -616,9 +616,12 @@ Content-Type: application/json
 ## Cupons
 
 ### 1. Listar Cupons (Paginado)
-**Endpoint:** `GET /cupons?Paginacao.NumeroPagina={page}&Paginacao.QuantidadeRegistros={pageSize}`
+**Endpoint:** `GET /cupons?Paginacao.NumeroPagina={page}&Paginacao.QuantidadeRegistros={pageSize}&Id={cupomId}`
 
 **Headers:** Authorization required (Admin only)
+
+**Query Parameters:**
+- `Id` (opcional): Filtrar por cupom específico
 
 **Response (200):**
 ```json
