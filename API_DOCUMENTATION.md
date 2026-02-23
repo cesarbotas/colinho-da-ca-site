@@ -819,6 +819,7 @@ Content-Type: application/json
 - `2`: Percentual por pet com mínimo
 - `3`: Percentual por pet com diárias
 - `4`: Valor fixo com mínimo
+- `5`: Ultimo Pet com desconto
 
 ### Status de Reserva
 - `1`: Criada
