@@ -2,10 +2,14 @@ import { API_BASE_URL, PaginatedResponse } from "../config";
 import { PetData } from "./types";
 import { getAuthHeaders } from "../auth";
 
-export async function listarPets(page: number = 1, pageSize: number = 10, clienteId?: number, petId?: number): Promise<PaginatedResponse<PetData>> {
+export async function listarPets(page: number = 1, pageSize: number = 10, filtrosAdicionais?: string | number, petId?: number): Promise<PaginatedResponse<PetData>> {
   let url = `${API_BASE_URL}/api/v1/pets?Paginacao.NumeroPagina=${page}&Paginacao.QuantidadeRegistros=${pageSize}`;
-  if (clienteId) {
-    url += `&ClienteId=${clienteId}`;
+  if (filtrosAdicionais !== undefined && filtrosAdicionais !== null) {
+    if (typeof filtrosAdicionais === "number") {
+      url += `&ClienteId=${filtrosAdicionais}`;
+    } else if (filtrosAdicionais) {
+      url += `&${filtrosAdicionais}`;
+    }
   }
   if (petId) {
     url += `&Id=${petId}`;

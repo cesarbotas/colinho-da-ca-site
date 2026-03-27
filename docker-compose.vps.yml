@@ -1,0 +1,15 @@
+services:
+  front:
+    build:
+      context: .
+      dockerfile: Dockerfile.vps
+    container_name: colinho-front
+    restart: always
+    ports:
+      - "3000:80"
+    networks:
+      - colinho-network
+
+networks:
+  colinho-network:
+    external: true

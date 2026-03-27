@@ -26,9 +26,7 @@ const CadastroDados = () => {
       try {
         const clienteId = authService.getClienteId();
         if (clienteId) {
-          const params = new URLSearchParams();
-          params.append('Id', clienteId.toString());
-          const response = await listarClientes(1, 1, params.toString());
+          const response = await listarClientes(1, 1, clienteId);
           if (response.data.length > 0) {
             const cliente = response.data[0];
             setFormData({
