@@ -99,6 +99,7 @@ const CupomForm = ({ cupom, onVoltar }: CupomFormProps) => {
                 <SelectItem value="2">Percentual por pet com mínimo</SelectItem>
                 <SelectItem value="3">Percentual por pet com diárias</SelectItem>
                 <SelectItem value="4">Valor fixo com mínimo</SelectItem>
+                <SelectItem value="5">Desconto no último pet</SelectItem>
               </SelectContent>
             </Select>
           </div>
