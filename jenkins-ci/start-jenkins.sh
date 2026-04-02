@@ -31,7 +31,7 @@ JENKINS_PASSWORD=$(docker exec jenkins-frontend cat /var/jenkins_home/secrets/in
 echo ""
 echo "✅ Ambiente iniciado com sucesso!"
 echo "============================================================"
-echo "🌐 Jenkins URL: http://localhost:8091"
+echo "🌐 Jenkins URL: http://localhost:8092"
 echo "🔐 Senha inicial: $JENKINS_PASSWORD"
 echo ""
 echo "📋 Próximos passos:"
